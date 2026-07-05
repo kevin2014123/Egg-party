@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>更多玩法</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e, #2d1b69, #4a2c8a);
+            color: #fff;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: clamp(28px, 5vw, 42px);
+            background: linear-gradient(45deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .back-btn {
+            padding: 10px 24px;
+            border-radius: 30px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 16px;
+            font-family: 'Comic Sans MS', cursive;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .back-btn:active {
+            transform: scale(0.95);
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .game-list {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .game-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .game-card:active {
+            transform: scale(0.97);
+        }
+        .game-card:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(168,85,247,0.4);
+        }
+
+        .game-card .icon {
+            font-size: 40px;
+            flex-shrink: 0;
+        }
+
+        .game-card .info {
+            flex: 1;
+        }
+
+        .game-card .info h3 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .game-card .info p {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .game-card .arrow {
+            font-size: 24px;
+            opacity: 0.4;
+        }
+
+        .game-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .game-card.disabled:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0 20px;
+            opacity: 0.4;
+            font-size: 13px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 480px) {
+            .game-card { padding: 16px; }
+            .game-card .icon { font-size: 30px; }
+            .game-card .info h3 { font-size: 17px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🎮 更多玩法</h1>
+        <button class="back-btn" onclick="window.location.href='world.html'">⬅ 返回</button>
+    </div>
+
+    <div class="game-list">
+
+        <!-- 惊魂寻宝队 -->
+        <div class="game-card" onclick="window.location.href='treasure_hunt.html'">
+            <span class="icon">🕯️</span>
+            <div class="info">
+                <h3>惊魂寻宝队</h3>
+                <p>组队摸金 · 古堡探险 · 成功撤离</p>
+            </div>
+            <span class="arrow">›</span>
+        </div>
+
+        <!-- 占位：更多玩法待添加 -->
+        <div class="game-card disabled">
+            <span class="icon">🔜</span>
+            <div class="info">
+                <h3>更多玩法即将上线</h3>
+                <p>敬请期待...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">✨ 更多精彩玩法持续开发中 ✨</div>
+
+</body>
+</html>
