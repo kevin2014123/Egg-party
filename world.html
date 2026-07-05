@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蛋仔奇幻世界</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Comic Sans MS', cursive;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+        }
+
+        /* 加载提示 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a0a2e, #4a2c8a);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            color: white;
+            font-size: 24px;
+            transition: opacity 1s;
+        }
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #loading .loader {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.1);
+            border-top: 6px solid #a855f7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===== 右上角更多玩法按钮 ===== */
+        #more-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Comic Sans MS', cursive;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            touch-action: manipulation;
+            letter-spacing: 1px;
+        }
+        #more-btn:active {
+            transform: scale(0.95);
+        }
+        #more-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.7);
+        }
+        #more-btn .icon {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 600px) {
+            #more-btn {
+                top: 12px;
+                right: 12px;
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+        @media (max-width: 400px) {
+            #more-btn {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+
+        /* 摇杆和跳跃按钮 */
+        #joystick-area {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            z-index: 50;
+            touch-action: none;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        #joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.8), rgba(168, 85, 247, 0.3));
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+            pointer-events: none;
+            transition: box-shadow 0.2s;
+        }
+        #joystick-knob.active {
+            box-shadow: 0 4px 30px rgba(168, 85, 247, 0.6);
+        }
+
+        #jump-btn {
+            position: fixed;
+            bottom: 50px;
+            right: 35px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.8), rgba(168, 85, 247, 0.6));
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 32px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 30px rgba(236, 72, 153, 0.4);
+            touch-action: none;
+            user-select: none;
+            font-family: 'Comic Sans MS', cursive;
+            font-weight: bold;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        #jump-btn:active {
+            transform: scale(0.9);
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.6);
+        }
+
+        #controls-hint {
+            position: fixed;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px 18px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            z-index: 40;
+            pointer-events: none;
+            text-align: center;
+            font-family: 'Comic Sans MS', cursive;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            #joystick-area { width: 120px; height: 120px; bottom: 25px; left: 20px; }
+            #joystick-knob { width: 50px; height: 50px; }
+            #jump-btn { width: 70px; height: 70px; bottom: 35px; right: 25px; font-size: 28px; }
+            #controls-hint { font-size: 11px; bottom: 140px; padding: 4px 14px; }
+        }
+        @media (max-width: 400px) {
+            #joystick-area { width: 100px; height: 100px; bottom: 20px; left: 15px; }
+            #joystick-knob { width: 40px; height: 40px; }
+            #jump-btn { width: 60px; height: 60px; bottom: 28px; right: 18px; font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 加载界面 -->
+    <div id="loading">
+        <div class="loader"></div>
+        <div>🌍 正在生成蛋仔世界...</div>
+    </div>
+
+    <!-- 右上角更多玩法按钮 -->
+    <button id="more-btn" onclick="goToMore()">
+        <span class="icon">🎮</span> 更多玩法
+    </button>
+
+    <!-- 操作提示 -->
+    <div id="controls-hint">🕹️ 左摇杆移动 · 右跳</div>
+
+    <!-- 摇杆 -->
+    <div id="joystick-area">
+        <div id="joystick-knob"></div>
+    </div>
+
+    <!-- 跳跃按钮 -->
+    <div id="jump-btn">⬆</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+    </script>
+    <script>
+        // ============================================================
+        // 跳转到更多玩法页面
+        // ============================================================
+        function goToMore() {
+            window.location.href = 'more.html';
+        }
+
+        // ============================================================
+        // 加载完成
+        // ============================================================
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+            }, 800);
+        });
+
+        // ============================================================
+        // 场景、相机、渲染器
+        // ============================================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 80, 200);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+        camera.position.set(0, 6, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.appendChild(renderer.domElement);
+
+        // ============================================================
+        // 灯光
+        // ============================================================
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.4);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+        sunLight.position.set(30, 50, 20);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.1;
+        sunLight.shadow.camera.far = 120;
+        sunLight.shadow.camera.left = -50;
+        sunLight.shadow.camera.right = 50;
+        sunLight.shadow.camera.top = 50;
+        sunLight.shadow.camera.bottom = -50;
+        scene.add(sunLight);
+
+        const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
+        fillLight.position.set(-20, 30, -20);
+        scene.add(fillLight);
+
+        const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3a7d44, 0.6);
+        scene.add(hemiLight);
+
+        // ============================================================
+        // 地面
+        // ============================================================
+        const groundSize = 80;
+        const groundGeo = new THREE.PlaneGeometry(groundSize, groundSize, 40, 40);
+        const groundMat = new THREE.MeshStandardMaterial({
+            color: 0x7cc46c,
+            roughness: 0.9,
+            metalness: 0,
+            flatShading: true,
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -0.05;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // ============================================================
+        // 花朵
+        // ============================================================
+        function createFlower(x, z, color) {
+            const group = new THREE.Group();
+            const stemGeo = new THREE.CylinderGeometry(0.04, 0.06, 0.4);
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a7c3f });
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.position.y = 0.2;
+            group.add(stem);
+            const petalMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.4 });
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 5) * Math.PI * 2;
+                const petal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 4, 4), petalMat);
+                petal.position.set(Math.cos(angle) * 0.15, 0.45, Math.sin(angle) * 0.15);
+                petal.scale.set(1, 0.4, 1);
+                group.add(petal);
+            }
+            const centerMat = new THREE.MeshStandardMaterial({ color: 0xffdd44 });
+            const center = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), centerMat);
+            center.position.y = 0.45;
+            group.add(center);
+            group.position.set(x, 0, z);
+            group.rotation.y = Math.random() * Math.PI * 2;
+            return group;
+        }
+        const flowerColors = [0xff6b6b, 0xff9ff3, 0xfeca57, 0x48dbfb, 0xff9f43, 0xee5a24, 0xa29bfe];
+        for (let i = 0; i < 300; i++) {
+            const x = (Math.random() - 0.5) * 70;
+            const z = (Math.random() - 0.5) * 70;
+            if (Math.abs(x) < 5 && Math.abs(z) < 5) continue;
+            if (Math.abs(x - 12) < 4 && Math.abs(z - 8) < 4) continue;
+            if (Math.abs(x + 10) < 4 && Math.abs(z - 12) < 4) continue;
+            if (Math.abs(x - 8) < 4 && Math.abs(z + 10) < 4) continue;
+            if (Math.abs(x) < 2 && Math.abs(z - 18) < 3) continue;
+            if (Math.abs(x - 6) < 2 && Math.abs(z - 18) < 3) continue;
+            if (Math.abs(x + 6) < 2 && Math.abs(z - 18) < 3) continue;
+            if (Math.abs(x - 3) < 2 && Math.abs(z + 18) < 3) continue;
+            if (Math.abs(x + 3) < 2 && Math.abs(z + 18) < 3) continue;
+            const color = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+            const flower = createFlower(x, z, color);
+            scene.add(flower);
+        }
+
+        // ============================================================
+        // 树木（无碰撞）
+        // ============================================================
+        function createTree(x, z, scale) {
+            const group = new THREE.Group();
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B6B4D, roughness: 0.9 });
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * scale, 0.5 * scale, 1.5 * scale), trunkMat);
+            trunk.position.y = 0.75 * scale;
+            trunk.castShadow = true;
+            group.add(trunk);
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x2d8a4e, roughness: 0.8 });
+            const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x3ca55c, roughness: 0.8 });
+            const leafMat3 = new THREE.MeshStandardMaterial({ color: 0x4cb96e, roughness: 0.8 });
+            const leaf1 = new THREE.Mesh(new THREE.SphereGeometry(0.8 * scale, 6, 6), leafMat);
+            leaf1.position.set(0, 1.8 * scale, 0);
+            leaf1.scale.set(1, 0.8, 1);
+            leaf1.castShadow = true;
+            group.add(leaf1);
+            const leaf2 = new THREE.Mesh(new THREE.SphereGeometry(0.6 * scale, 6, 6), leafMat2);
+            leaf2.position.set(0.5 * scale, 2.3 * scale, 0.3 * scale);
+            leaf2.castShadow = true;
+            group.add(leaf2);
+            const leaf3 = new THREE.Mesh(new THREE.SphereGeometry(0.6 * scale, 6, 6), leafMat3);
+            leaf3.position.set(-0.4 * scale, 2.4 * scale, -0.3 * scale);
+            leaf3.castShadow = true;
+            group.add(leaf3);
+            group.position.set(x, 0, z);
+            return group;
+        }
+        for (let i = 0; i < 60; i++) {
+            const x = (Math.random() - 0.5) * 65;
+            const z = (Math.random() - 0.5) * 65;
+            if (Math.abs(x) < 6 && Math.abs(z) < 6) continue;
+            if (Math.abs(x - 12) < 5 && Math.abs(z - 8) < 5) continue;
+            if (Math.abs(x + 10) < 5 && Math.abs(z - 12) < 5) continue;
+            if (Math.abs(x - 8) < 5 && Math.abs(z + 10) < 5) continue;
+            if (Math.abs(x) < 3 && Math.abs(z - 18) < 4) continue;
+            if (Math.abs(x - 6) < 3 && Math.abs(z - 18) < 4) continue;
+            if (Math.abs(x + 6) < 3 && Math.abs(z - 18) < 4) continue;
+            if (Math.abs(x - 3) < 3 && Math.abs(z + 18) < 4) continue;
+            if (Math.abs(x + 3) < 3 && Math.abs(z + 18) < 4) continue;
+            const scale = 0.6 + Math.random() * 0.8;
+            const tree = createTree(x, z, scale);
+            scene.add(tree);
+        }
+
+        // ============================================================
+        // 高楼（无碰撞）
+        // ============================================================
+        function createBuilding(x, z, w, h, d, color) {
+            const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.1 });
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, h / 2, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            const lineMat = new THREE.MeshStandardMaterial({
+                color: 0x88ccff,
+                emissive: 0x4488aa,
+                emissiveIntensity: 0.1,
+            });
+            for (let i = 0; i < 4; i++) {
+                const wx = (Math.random() - 0.5) * w * 0.6;
+                const wy = (Math.random() - 0.5) * h * 0.6 + h * 0.1;
+                const wz = (Math.random() > 0.5 ? 1 : -1) * d * 0.5 + 0.01;
+                const win = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.3), lineMat);
+                win.position.set(wx, wy, wz);
+                if (wz > 0) win.rotation.y = 0;
+                else win.rotation.y = Math.PI;
+                scene.add(win);
+            }
+        }
+        const buildingColors = [0x6c5ce7, 0x0984e3, 0x00b894, 0xe17055, 0x6ab04c, 0xf0932b, 0xeb4d4b, 0x22a6b3];
+        const buildings = [
+            { x: -14, z: -10, w: 2.5, h: 6, d: 2.5 },
+            { x: -10, z: -14, w: 3, h: 8, d: 3 },
+            { x: -6, z: -10, w: 2, h: 5, d: 2 },
+            { x: -12, z: -6, w: 2.5, h: 7, d: 2.5 },
+            { x: -16, z: -14, w: 3.5, h: 10, d: 3.5 },
+            { x: -18, z: -8, w: 2, h: 4, d: 2 },
+            { x: 14, z: -10, w: 2.5, h: 6, d: 2.5 },
+            { x: 10, z: -14, w: 3, h: 9, d: 3 },
+            { x: 6, z: -10, w: 2, h: 5, d: 2 },
+            { x: 12, z: -6, w: 2.5, h: 7, d: 2.5 },
+            { x: 16, z: -14, w: 3.5, h: 11, d: 3.5 },
+            { x: 18, z: -8, w: 2, h: 4, d: 2 },
+            { x: -8, z: -18, w: 2, h: 4, d: 2 },
+            { x: 8, z: -18, w: 2, h: 4, d: 2 },
+            { x: 0, z: -18, w: 2.5, h: 5, d: 2.5 },
+            { x: -4, z: -20, w: 2, h: 3.5, d: 2 },
+            { x: 4, z: -20, w: 2, h: 3.5, d: 2 },
+            { x: -14, z: -20, w: 3, h: 7, d: 3 },
+            { x: 14, z: -20, w: 3, h: 7, d: 3 },
+        ];
+        buildings.forEach(b => {
+            const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
+            createBuilding(b.x, b.z, b.w, b.h, b.d, color);
+        });
+
+        // ============================================================
+        // 彩虹桥
+        // ============================================================
+        function createRainbowBridge() {
+            const group = new THREE.Group();
+            const colors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0x8b00ff];
+            const arcPoints = [];
+            for (let i = 0; i <= 20; i++) {
+                const t = i / 20;
+                const x = -6 + t * 12;
+                const y = 1.5 * Math.sin(t * Math.PI);
+                arcPoints.push(new THREE.Vector3(x, y + 0.5, 0));
+            }
+            for (let r = 0; r < colors.length; r++) {
+                const points = arcPoints.map(p => {
+                    const offset = (r / colors.length) * 0.3;
+                    return new THREE.Vector3(p.x, p.y - offset, 0);
+                });
+                const curve = new THREE.CatmullRomCurve3(points);
+                const geo = new THREE.TubeGeometry(curve, 30, 0.15, 6, false);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: colors[r],
+                    emissive: colors[r],
+                    emissiveIntensity: 0.2,
+                    roughness: 0.3,
+                    metalness: 0.1,
+                    transparent: true,
+                    opacity: 0.85,
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                group.add(mesh);
+            }
+            const bridgeMat = new THREE.MeshStandardMaterial({
+                color: 0x88ddff,
+                transparent: true,
+                opacity: 0.3,
+                roughness: 0.1,
+                metalness: 0.3,
+            });
+            const bridgePlane = new THREE.Mesh(new THREE.PlaneGeometry(12, 1.2, 20, 4), bridgeMat);
+            bridgePlane.rotation.x = -0.1;
+            bridgePlane.position.set(0, 0.2, 0);
+            group.add(bridgePlane);
+            group.position.set(0, 0.1, 8);
+            return group;
+        }
+        const bridge = createRainbowBridge();
+        scene.add(bridge);
+
+        // ============================================================
+        // 独木桥
+        // ============================================================
+        function createLogBridge(x, z, angle, length) {
+            const group = new THREE.Group();
+            const logMat = new THREE.MeshStandardMaterial({ color: 0x8B6B4D, roughness: 0.9, metalness: 0 });
+            const log = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, length, 8), logMat);
+            log.rotation.z = Math.PI / 2;
+            log.position.y = 0.3;
+            log.castShadow = true;
+            group.add(log);
+            const ropeMat = new THREE.MeshStandardMaterial({ color: 0x8B7D6B, roughness: 0.9 });
+            for (let side = -1; side <= 1; side += 2) {
+                const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, length * 0.9, 4), ropeMat);
+                rope.rotation.z = Math.PI / 2;
+                rope.position.set(side * 0.3, 0.8, 0);
+                group.add(rope);
+            }
+            for (let i = -1; i <= 1; i += 2) {
+                const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.8, 6), ropeMat);
+                pillar.position.set(0, 0.4, i * length * 0.45);
+                group.add(pillar);
+            }
+            group.position.set(x, 0, z);
+            group.rotation.y = angle;
+            return group;
+        }
+        const logBridges = [
+            { x: -5, z: 5, angle: 0.3, length: 4 },
+            { x: 5, z: 4, angle: -0.4, length: 3.5 },
+            { x: -4, z: -4, angle: 0.8, length: 3 },
+            { x: 4, z: -5, angle: -0.7, length: 3.5 },
+            { x: -8, z: 2, angle: 1.2, length: 2.5 },
+            { x: 8, z: 1, angle: -1.0, length: 2.5 },
+        ];
+        logBridges.forEach(b => {
+            const bridge = createLogBridge(b.x, b.z, b.angle, b.length);
+            scene.add(bridge);
+        });
+
+        // ============================================================
+        // 河流
+        // ============================================================
+        function createRiver() {
+            const riverMat = new THREE.MeshStandardMaterial({
+                color: 0x4a9fd8,
+                transparent: true,
+                opacity: 0.6,
+                roughness: 0.1,
+                metalness: 0.3,
+            });
+            const river = new THREE.Mesh(new THREE.PlaneGeometry(3, 20, 10, 30), riverMat);
+            river.rotation.x = -Math.PI / 2;
+            river.position.set(0, 0.02, -12);
+            river.receiveShadow = true;
+            scene.add(river);
+            const waveMat = new THREE.MeshStandardMaterial({
+                color: 0x6ab0e6,
+                transparent: true,
+                opacity: 0.2,
+                roughness: 0,
+                metalness: 0.5,
+            });
+            for (let i = 0; i < 8; i++) {
+                const wave = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 0.3, 4, 2), waveMat);
+                wave.rotation.x = -Math.PI / 2;
+                wave.position.set((Math.random() - 0.5) * 2, 0.03 + i * 0.15, -12 - 6 + i * 1.4);
+                wave.userData = { speed: 0.5 + Math.random() * 0.5, offset: Math.random() * 10 };
+                scene.add(wave);
+            }
+            return river;
+        }
+        createRiver();
+
+        // ============================================================
+        // 蝴蝶
+        // ============================================================
+        function createButterfly(x, y, z, color) {
+            const group = new THREE.Group();
+
+            const wingMat = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.3,
+                metalness: 0.05,
+                transparent: true,
+                opacity: 0.9,
+                side: THREE.DoubleSide,
+            });
+            const wingMatLight = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.3,
+                metalness: 0.05,
+                transparent: true,
+                opacity: 0.5,
+                side: THREE.DoubleSide,
+            });
+
+            const wingShapeL = new THREE.Shape();
+            wingShapeL.moveTo(0, 0);
+            wingShapeL.quadraticCurveTo(-0.7, 0.5, -0.5, 0.9);
+            wingShapeL.quadraticCurveTo(-0.2, 0.7, 0, 0.5);
+            const wingGeoL = new THREE.ShapeGeometry(wingShapeL);
+            const wingL = new THREE.Mesh(wingGeoL, wingMat);
+            wingL.position.set(0, 0, 0);
+            wingL.rotation.x = -0.1;
+            wingL.rotation.z = 0.1;
+            group.add(wingL);
+
+            const wingShapeL2 = new THREE.Shape();
+            wingShapeL2.moveTo(0, 0);
+            wingShapeL2.quadraticCurveTo(-0.5, -0.2, -0.4, -0.7);
+            wingShapeL2.quadraticCurveTo(-0.15, -0.5, 0, -0.3);
+            const wingGeoL2 = new THREE.ShapeGeometry(wingShapeL2);
+            const wingL2 = new THREE.Mesh(wingGeoL2, wingMatLight);
+            wingL2.position.set(0, 0, 0);
+            wingL2.rotation.x = 0.1;
+            wingL2.rotation.z = 0.1;
+            group.add(wingL2);
+
+            const wingShapeR = new THREE.Shape();
+            wingShapeR.moveTo(0, 0);
+            wingShapeR.quadraticCurveTo(0.7, 0.5, 0.5, 0.9);
+            wingShapeR.quadraticCurveTo(0.2, 0.7, 0, 0.5);
+            const wingGeoR = new THREE.ShapeGeometry(wingShapeR);
+            const wingR = new THREE.Mesh(wingGeoR, wingMat);
+            wingR.position.set(0, 0, 0);
+            wingR.rotation.x = -0.1;
+            wingR.rotation.z = -0.1;
+            group.add(wingR);
+
+            const wingShapeR2 = new THREE.Shape();
+            wingShapeR2.moveTo(0, 0);
+            wingShapeR2.quadraticCurveTo(0.5, -0.2, 0.4, -0.7);
+            wingShapeR2.quadraticCurveTo(0.15, -0.5, 0, -0.3);
+            const wingGeoR2 = new THREE.ShapeGeometry(wingShapeR2);
+            const wingR2 = new THREE.Mesh(wingGeoR2, wingMatLight);
+            wingR2.position.set(0, 0, 0);
+            wingR2.rotation.x = 0.1;
+            wingR2.rotation.z = -0.1;
+            group.add(wingR2);
+
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.7 });
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.07, 0.3, 6), bodyMat);
+            body.rotation.x = Math.PI / 2;
+            body.position.y = 0.05;
+            group.add(body);
+
+            const antMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00 });
+            for (let s = -1; s <= 1; s += 2) {
+                const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.18, 4), antMat);
+                ant.position.set(s * 0.08, 0.2, 0);
+                ant.rotation.z = s * 0.5;
+                ant.rotation.x = -0.3;
+                group.add(ant);
+                const ball = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 4), antMat);
+                ball.position.set(s * 0.14, 0.28, 0);
+                group.add(ball);
+            }
+
+            const spotMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.3,
+            });
+            for (let i = 0; i < 3; i++) {
+                const spot = new THREE.Mesh(new THREE.CircleGeometry(0.04, 6), spotMat);
+                spot.position.set(-0.25 - i * 0.08, 0.4 + i * 0.12, 0.01);
+                group.add(spot);
+                const spotR = new THREE.Mesh(new THREE.CircleGeometry(0.04, 6), spotMat);
+                spotR.position.set(0.25 + i * 0.08, 0.4 + i * 0.12, 0.01);
+                group.add(spotR);
+            }
+
+            group.position.set(x, y, z);
+            group.scale.set(1.2, 1.2, 1.2);
+            group.userData = {
+                phase: Math.random() * Math.PI * 2,
+                speed: 0.4 + Math.random() * 0.4,
+                radius: 2 + Math.random() * 3,
+                center: new THREE.Vector3(x, y, z),
+                wingPhase: 0,
+                floatPhase: Math.random() * Math.PI * 2,
+            };
+            return group;
+        }
+
+        const butterflyColors = [0xff6b6b, 0xff9ff3, 0xfeca57, 0x48dbfb, 0xa29bfe, 0xff9f43, 0x00d2d3];
+        const butterflies = [];
+        for (let i = 0; i < 15; i++) {
+            const x = (Math.random() - 0.5) * 30;
+            const z = (Math.random() - 0.5) * 30 - 5;
+            const y = 2 + Math.random() * 4;
+            const color = butterflyColors[Math.floor(Math.random() * butterflyColors.length)];
+            const butterfly = createButterfly(x, y, z, color);
+            scene.add(butterfly);
+            butterflies.push(butterfly);
+        }
+
+        // ============================================================
+        // 彩虹桥星星装饰
+        // ============================================================
+        function createStar(x, y, z) {
+            const starMat = new THREE.MeshStandardMaterial({
+                color: 0xffdd44,
+                emissive: 0xffdd44,
+                emissiveIntensity: 0.3,
+            });
+            const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), starMat);
+            star.position.set(x, y, z);
+            return star;
+        }
+        for (let i = -5; i <= 5; i++) {
+            const star = createStar(i * 1.1, 1.2 + Math.sin(i * 0.5) * 0.3, 8.5);
+            scene.add(star);
+        }
+
+        // ============================================================
+        // 蛋仔角色（玩家）
+        // ============================================================
+        function createPlayer() {
+            const group = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0xFFD54F,
+                roughness: 0.3,
+                metalness: 0.1,
+            });
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), bodyMat);
+            body.scale.set(1, 0.85, 1);
+            body.position.y = 0.6;
+            body.castShadow = true;
+            group.add(body);
+
+            const bellyMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
+            const belly = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), bellyMat);
+            belly.scale.set(0.9, 0.8, 0.5);
+            belly.position.set(0, 0.5, 0.6);
+            group.add(belly);
+
+            const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e });
+            const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+
+            for (let s = -1; s <= 1; s += 2) {
+                const white = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), eyeWhiteMat);
+                white.position.set(s * 0.25, 0.75, 0.65);
+                group.add(white);
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeMat);
+                pupil.position.set(s * 0.25 + s * 0.06, 0.75, 0.78);
+                group.add(pupil);
+                const highlight = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.035, 4, 4),
+                    new THREE.MeshStandardMaterial({ color: 0xFFFFFF })
+                );
+                highlight.position.set(s * 0.25 + s * 0.1, 0.78, 0.82);
+                group.add(highlight);
+            }
+
+            const mouthMat = new THREE.MeshStandardMaterial({ color: 0xCC4444 });
+            const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.025, 6, 12, Math.PI), mouthMat);
+            mouth.position.set(0, 0.58, 0.7);
+            mouth.rotation.x = 0.1;
+            mouth.rotation.z = 0.1;
+            group.add(mouth);
+
+            const blushMat = new THREE.MeshStandardMaterial({
+                color: 0xff6b6b,
+                transparent: true,
+                opacity: 0.3,
+            });
+            for (let s = -1; s <= 1; s += 2) {
+                const blush = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 6), blushMat);
+                blush.scale.set(1, 0.7, 0.5);
+                blush.position.set(s * 0.4, 0.5, 0.65);
+                group.add(blush);
+            }
+
+            const hatMat = new THREE.MeshStandardMaterial({ color: 0x8B5CF6, roughness: 0.3 });
+            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.5, 8), hatMat);
+            hat.position.y = 1.05;
+            hat.rotation.x = 0.05;
+            group.add(hat);
+            const hatBand = new THREE.Mesh(
+                new THREE.TorusGeometry(0.45, 0.05, 6, 12),
+                new THREE.MeshStandardMaterial({ color: 0xEC4899 })
+            );
+            hatBand.position.y = 0.85;
+            group.add(hatBand);
+            const hatBall = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 6, 6),
+                new THREE.MeshStandardMaterial({ color: 0xFCD34D })
+            );
+            hatBall.position.set(0, 1.3, 0);
+            group.add(hatBall);
+
+            const armMat = new THREE.MeshStandardMaterial({ color: 0xFFD54F, roughness: 0.3 });
+            for (let s = -1; s <= 1; s += 2) {
+                const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.5, 6), armMat);
+                arm.position.set(s * 0.6, 0.5, 0);
+                arm.rotation.z = s * 0.3;
+                arm.rotation.x = -0.2;
+                group.add(arm);
+                const hand = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.1, 6, 6),
+                    new THREE.MeshStandardMaterial({ color: 0xFFD54F })
+                );
+                hand.position.set(s * 0.85, 0.25, 0);
+                group.add(hand);
+            }
+
+            const legMat = new THREE.MeshStandardMaterial({ color: 0xFFD54F, roughness: 0.3 });
+            for (let s = -1; s <= 1; s += 2) {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.35, 6), legMat);
+                leg.position.set(s * 0.2, 0.15, 0);
+                group.add(leg);
+                const foot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.12, 6, 6),
+                    new THREE.MeshStandardMaterial({ color: 0xFFD54F })
+                );
+                foot.scale.set(1, 0.6, 1.2);
+                foot.position.set(s * 0.2, 0, 0.05);
+                group.add(foot);
+            }
+
+            group.position.set(0, 0, 0);
+            return group;
+        }
+
+        const player = createPlayer();
+        scene.add(player);
+
+        // ============================================================
+        // 玩家控制变量
+        // ============================================================
+        const playerVelocity = new THREE.Vector3(0, 0, 0);
+        const playerSpeed = 6.0;
+        const jumpSpeed = 7.0;
+        let isOnGround = true;
+        let isJumping = false;
+
+        // ============================================================
+        // 虚拟摇杆控制（灵敏度降低）
+        // ============================================================
+        const joystickArea = document.getElementById('joystick-area');
+        const joystickKnob = document.getElementById('joystick-knob');
+        let joystickActive = false;
+        let joystickData = { x: 0, y: 0 };
+        let joystickTouchId = null;
+
+        const SENSITIVITY = 0.5;
+
+        function handleJoystickStart(clientX, clientY) {
+            const rect = joystickArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const radius = rect.width / 2;
+
+            let dx = clientX - centerX;
+            let dy = clientY - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxDist = radius - 30;
+
+            if (dist > maxDist) {
+                dx = dx / dist * maxDist;
+                dy = dy / dist * maxDist;
+            }
+
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            joystickKnob.classList.add('active');
+
+            const normalizedX = (dx / maxDist) * SENSITIVITY;
+            const normalizedY = (dy / maxDist) * SENSITIVITY;
+            joystickData.x = Math.max(-1, Math.min(1, normalizedX));
+            joystickData.y = Math.max(-1, Math.min(1, normalizedY));
+            joystickActive = true;
+        }
+
+        function handleJoystickMove(clientX, clientY) {
+            if (!joystickActive) return;
+            const rect = joystickArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const radius = rect.width / 2;
+
+            let dx = clientX - centerX;
+            let dy = clientY - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxDist = radius - 30;
+
+            if (dist > maxDist) {
+                dx = dx / dist * maxDist;
+                dy = dy / dist * maxDist;
+            }
+
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+            const normalizedX = (dx / maxDist) * SENSITIVITY;
+            const normalizedY = (dy / maxDist) * SENSITIVITY;
+            joystickData.x = Math.max(-1, Math.min(1, normalizedX));
+            joystickData.y = Math.max(-1, Math.min(1, normalizedY));
+        }
+
+        function handleJoystickEnd() {
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+            joystickKnob.classList.remove('active');
+            joystickActive = false;
+            joystickData.x = 0;
+            joystickData.y = 0;
+            joystickTouchId = null;
+        }
+
+        joystickArea.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            handleJoystickStart(e.clientX, e.clientY);
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (joystickActive) {
+                handleJoystickMove(e.clientX, e.clientY);
+            }
+        });
+        window.addEventListener('mouseup', () => {
+            if (joystickActive) handleJoystickEnd();
+        });
+
+        joystickArea.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            joystickTouchId = touch.identifier;
+            handleJoystickStart(touch.clientX, touch.clientY);
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (joystickTouchId !== null) {
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
+                if (touch) {
+                    e.preventDefault();
+                    handleJoystickMove(touch.clientX, touch.clientY);
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            const touch = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
+            if (touch) {
+                e.preventDefault();
+                handleJoystickEnd();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchcancel', () => {
+            if (joystickTouchId !== null) handleJoystickEnd();
+        });
+
+        // ============================================================
+        // 跳跃按钮
+        // ============================================================
+        const jumpBtn = document.getElementById('jump-btn');
+
+        function doJump() {
+            if (isOnGround && !isJumping) {
+                playerVelocity.y = jumpSpeed;
+                isOnGround = false;
+                isJumping = true;
+            }
+        }
+
+        jumpBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            doJump();
+        });
+        jumpBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            doJump();
+        }, { passive: false });
+
+        // ============================================================
+        // 键盘支持（方便调试）
+        // ============================================================
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ' || e.key === 'Space') {
+                e.preventDefault();
+                doJump();
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // ============================================================
+        // 窗口自适应
+        // ============================================================
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ============================================================
+        // 固定第三视角相机（背后跟随）
+        // ============================================================
+        const camDistance = 10;
+        const camHeight = 6;
+
+        function updateCamera() {
+            const playerPos = player.position.clone();
+            playerPos.y += 1.5;
+
+            const angle = player.rotation.y;
+            const offsetX = Math.sin(angle) * camDistance;
+            const offsetZ = Math.cos(angle) * camDistance;
+
+            camera.position.x = playerPos.x - offsetX;
+            camera.position.z = playerPos.z - offsetZ;
+            camera.position.y = playerPos.y + camHeight;
+
+            camera.lookAt(playerPos);
+        }
+
+        // ============================================================
+        // 动画循环
+        // ============================================================
+        let time = 0;
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = Math.min(clock.getDelta(), 0.05);
+            time += delta;
+
+            // ---- 玩家移动 ----
+            const moveX = joystickData.x;
+            const moveZ = joystickData.y;
+
+            const forward = new THREE.Vector3(0, 0, -1);
+            const right = new THREE.Vector3(1, 0, 0);
+            const camQuat = camera.quaternion.clone();
+            camQuat.x = 0;
+            camQuat.z = 0;
+            camQuat.normalize();
+
+            const moveDir = new THREE.Vector3();
+            moveDir.add(forward.clone().applyQuaternion(camQuat).multiplyScalar(-moveZ));
+            moveDir.add(right.clone().applyQuaternion(camQuat).multiplyScalar(moveX));
+            moveDir.y = 0;
+
+            const moveLen = moveDir.length();
+            if (moveLen > 0.01) {
+                moveDir.normalize();
+                const targetAngle = Math.atan2(moveDir.x, moveDir.z);
+                let currentAngle = player.rotation.y;
+                let diff = targetAngle - currentAngle;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                const turnSpeed = 5.0;
+                player.rotation.y += diff * Math.min(1, turnSpeed * delta);
+            }
+
+            const moveSpeed = playerSpeed * Math.min(1, moveLen);
+            const step = moveSpeed * delta;
+            const moveVec = moveDir.clone().multiplyScalar(step);
+
+            const newPos = player.position.clone().add(moveVec);
+            if (Math.abs(newPos.x) < 38 && Math.abs(newPos.z) < 38) {
+                player.position.x += moveVec.x;
+                player.position.z += moveVec.z;
+            }
+
+            // ---- 跳跃物理 ----
+            if (!isOnGround) {
+                playerVelocity.y -= 12 * delta;
+                player.position.y += playerVelocity.y * delta;
+                if (player.position.y <= 0) {
+                    player.position.y = 0;
+                    playerVelocity.y = 0;
+                    isOnGround = true;
+                    isJumping = false;
+                }
+            }
+
+            const breathe = Math.sin(time * 2) * 0.005;
+            player.position.y += breathe;
+
+            // ---- 蝴蝶动画 ----
+            butterflies.forEach((bf) => {
+                const data = bf.userData;
+                data.wingPhase += delta * 8;
+                const wingFlap = Math.sin(data.wingPhase) * 0.4 + 0.6;
+
+                bf.children.forEach(child => {
+                    if (child.geometry && child.geometry.type === 'ShapeGeometry') {
+                        child.scale.x = wingFlap;
+                        child.scale.z = 0.5 + Math.sin(data.wingPhase + 0.5) * 0.2;
+                    }
+                });
+
+                const angle = time * data.speed + data.phase;
+                bf.position.x = data.center.x + Math.sin(angle) * data.radius;
+                bf.position.z = data.center.z + Math.cos(angle * 0.7) * data.radius * 0.8;
+                bf.position.y = data.center.y + Math.sin(angle * 1.3 + data.floatPhase) * 0.8;
+                bf.rotation.y = -Math.atan2(Math.cos(angle) * data.radius, -Math.sin(angle * 0.7) * data.radius * 0.8);
+                bf.rotation.z = Math.sin(angle * 1.5 + data.floatPhase) * 0.2;
+            });
+
+            // ---- 彩虹桥呼吸光效 ----
+            bridge.children.forEach(child => {
+                if (child.material && child.material.emissiveIntensity !== undefined) {
+                    child.material.emissiveIntensity = 0.15 + Math.sin(time * 1.5 + child.id) * 0.1;
+                }
+            });
+
+            // ---- 更新相机 ----
+            updateCamera();
+
+            renderer.render(scene, camera);
+        }
+
+        // 初始化相机位置
+        updateCamera();
+        animate();
+
+        console.log('🌍 蛋仔奇幻世界已加载！');
+        console.log('🕹️ 左摇杆移动 · 右跳');
+        console.log('🦋 蝴蝶在飞舞 · 彩虹桥在发光');
+        console.log('⚡ 速度已提升 · 无碰撞限制');
+    </script>
+</body>
+</html>
