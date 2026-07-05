@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>加载中 - 蛋仔奇幻之旅</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+            background: #1a0a2e;
+            cursor: default;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .loading-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg,
+                #1a0a2e 0%,
+                #2d1b69 20%,
+                #4a2c8a 40%,
+                #6b3fa0 55%,
+                #8B5CF6 70%,
+                #A78BFA 85%,
+                #C4B5FD 100%
+            );
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bg-deco {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: starTwinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: orbFloat 8s ease-in-out infinite;
+        }
+
+        .orb:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: rgba(139, 92, 246, 0.3);
+            top: -50px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .orb:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: rgba(236, 72, 153, 0.2);
+            bottom: -100px;
+            right: -100px;
+            animation-delay: 2s;
+        }
+
+        .orb:nth-child(3) {
+            width: 200px;
+            height: 200px;
+            background: rgba(251, 191, 36, 0.15);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 4s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+
+        .loading-egg {
+            position: relative;
+            z-index: 10;
+            animation: eggFloat 2s ease-in-out infinite;
+            filter: drop-shadow(0 20px 60px rgba(139, 92, 246, 0.4));
+        }
+
+        @keyframes eggFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .egg-body-loading {
+            position: relative;
+            width: 120px;
+            height: 140px;
+            background: radial-gradient(ellipse at 40% 30%, #FFF9C4, #FFD54F);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 
+                inset -10px -10px 30px rgba(0, 0, 0, 0.1),
+                0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .egg-body-loading::before {
+            content: '☺';
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            color: #FF6F00;
+        }
+
+        .egg-body-loading::after {
+            content: '🟦🟦🟦';
+            position: absolute;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: #1976D2;
+        }
+
+        .egg-hat-loading {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 35px;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
+            animation: hatWiggle 2s ease-in-out infinite;
+        }
+
+        @keyframes hatWiggle {
+            0%, 100% { transform: translateX(-50%) rotate(0deg); }
+            25% { transform: translateX(-50%) rotate(-5deg); }
+            75% { transform: translateX(-50%) rotate(5deg); }
+        }
+
+        .egg-arm-loading {
+            position: absolute;
+            top: 35px;
+            font-size: 24px;
+        }
+
+        .egg-arm-loading.left {
+            left: -22px;
+            animation: armSwingL 1.5s ease-in-out infinite;
+        }
+
+        .egg-arm-loading.right {
+            right: -22px;
+            animation: armSwingR 1.5s ease-in-out infinite;
+        }
+
+        @keyframes armSwingL {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-25deg); }
+        }
+
+        @keyframes armSwingR {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(25deg); }
+        }
+
+        .loading-title {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .loading-title h2 {
+            font-size: clamp(28px, 5vw, 48px);
+            color: #FFF;
+            text-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
+            letter-spacing: 4px;
+            font-family: 'Comic Sans MS', cursive;
+        }
+
+        .loading-title .sub {
+            font-size: clamp(14px, 2vw, 20px);
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 8px;
+            letter-spacing: 3px;
+        }
+
+        .progress-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 80%;
+            max-width: 500px;
+            margin-top: 35px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #8B5CF6, #EC4899, #F59E0B);
+            border-radius: 50px;
+            transition: width 0.3s ease-out;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                transparent 100%
+            );
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .percentage {
+            position: relative;
+            z-index: 10;
+            font-size: clamp(42px, 8vw, 72px);
+            font-weight: 700;
+            color: #FFF;
+            margin-top: 15px;
+            text-shadow: 0 4px 30px rgba(139, 92, 246, 0.3);
+            font-family: 'Comic Sans MS', cursive;
+            letter-spacing: 2px;
+        }
+
+        .percentage .percent-sign {
+            font-size: clamp(24px, 4vw, 40px);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .loading-status {
+            position: relative;
+            z-index: 10;
+            font-size: clamp(16px, 2.5vw, 22px);
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 10px;
+            min-height: 40px;
+            text-align: center;
+            letter-spacing: 2px;
+            font-family: 'Comic Sans MS', cursive;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading-status .highlight {
+            color: #FCD34D;
+            font-weight: 600;
+        }
+
+        .footer-info {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: clamp(13px, 1.8vw, 18px);
+            letter-spacing: 2px;
+            font-family: 'Comic Sans MS', cursive;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-info .heart {
+            color: #EC4899;
+            display: inline-block;
+            animation: heartBeat 1.2s ease-in-out infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .footer-info .highlight-name {
+            color: #FCD34D;
+            font-weight: 600;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .deco-emoji {
+            position: absolute;
+            font-size: 30px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.4;
+            animation: decoFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes decoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        .complete-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .complete-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .complete-box {
+            text-align: center;
+            padding: 40px 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+        }
+
+        .complete-box .big-icon {
+            font-size: 80px;
+            display: block;
+            margin-bottom: 20px;
+            animation: eggFloat 2s ease-in-out infinite;
+        }
+
+        .complete-box h2 {
+            font-size: 36px;
+            color: #FFF;
+            margin-bottom: 10px;
+            font-family: 'Comic Sans MS', cursive;
+        }
+
+        .complete-box p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 25px;
+        }
+
+        .complete-box .btn-start {
+            padding: 14px 50px;
+            border-radius: 50px;
+            border: none;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: #FFF;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Comic Sans MS', cursive;
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .complete-box .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .egg-body-loading { width: 85px; height: 100px; }
+            .egg-body-loading::before { font-size: 24px; top: 28px; }
+            .egg-body-loading::after { font-size: 8px; bottom: 12px; letter-spacing: 4px; }
+            .egg-hat-loading { font-size: 26px; top: -18px; }
+            .egg-arm-loading { font-size: 18px; }
+            .egg-arm-loading.left { left: -18px; }
+            .egg-arm-loading.right { right: -18px; }
+            .progress-wrapper { width: 90%; }
+            .percentage { font-size: 36px; }
+            .complete-box { padding: 30px 25px; }
+            .complete-box .big-icon { font-size: 60px; }
+            .complete-box h2 { font-size: 28px; }
+            .complete-box .btn-start { font-size: 17px; padding: 12px 35px; }
+        }
+
+        @media (max-width: 480px) {
+            .egg-body-loading { width: 65px; height: 78px; }
+            .egg-body-loading::before { font-size: 18px; top: 22px; }
+            .egg-body-loading::after { font-size: 6px; bottom: 8px; letter-spacing: 3px; }
+            .egg-hat-loading { font-size: 20px; top: -14px; }
+            .egg-arm-loading { font-size: 14px; }
+            .egg-arm-loading.left { left: -14px; }
+            .egg-arm-loading.right { right: -14px; }
+            .loading-title h2 { font-size: 22px; }
+            .percentage { font-size: 28px; }
+            .loading-status { font-size: 14px; min-height: 30px; }
+            .footer-info { font-size: 11px; bottom: 15px; }
+            .complete-box .big-icon { font-size: 40px; }
+            .complete-box h2 { font-size: 22px; }
+            .complete-box p { font-size: 14px; }
+            .complete-box .btn-start { font-size: 15px; padding: 10px 28px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading-container" id="loadingContainer">
+
+        <div class="bg-deco">
+            <div class="stars" id="starsContainer"></div>
+            <div class="orb"></div>
+            <div class="orb"></div>
+            <div class="orb"></div>
+        </div>
+
+        <div class="deco-emoji" style="top: 8%; left: 5%; animation-delay: 0s;">🌟</div>
+        <div class="deco-emoji" style="top: 12%; right: 8%; animation-delay: 1.5s;">🌙</div>
+        <div class="deco-emoji" style="bottom: 20%; left: 3%; animation-delay: 3s;">✨</div>
+        <div class="deco-emoji" style="bottom: 25%; right: 5%; animation-delay: 4.5s;">⭐</div>
+        <div class="deco-emoji" style="top: 45%; left: 2%; animation-delay: 2s;">🌸</div>
+        <div class="deco-emoji" style="top: 50%; right: 2%; animation-delay: 3.5s;">🌺</div>
+
+        <div class="loading-egg">
+            <div class="egg-body-loading">
+                <div class="egg-hat-loading">🎩</div>
+                <div class="egg-arm-loading left">🖐️</div>
+                <div class="egg-arm-loading right">🖐️</div>
+            </div>
+        </div>
+
+        <div class="loading-title">
+            <h2>🎈 蛋仔奇幻之旅</h2>
+            <div class="sub">✦ 正在加载梦幻世界 ✦</div>
+        </div>
+
+        <div class="progress-wrapper">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="percentage" id="percentageDisplay">
+            0<span class="percent-sign">%</span>
+        </div>
+
+        <div class="loading-status" id="loadingStatus">
+            🌟 正在唤醒蛋仔世界...
+        </div>
+
+        <div class="footer-info">
+            <span class="heart">❤</span>
+            此游戏由 <span class="highlight-name">谢子涵</span> 倾心制作
+            <span class="heart">❤</span>
+        </div>
+    </div>
+
+    <div class="complete-overlay" id="completeOverlay">
+        <div class="complete-box">
+            <span class="big-icon">🎉</span>
+            <h2>加载完成！</h2>
+            <p>蛋仔世界已准备就绪，<br>等待你的冒险！</p>
+            <button class="btn-start" onclick="enterGame()">
+                🚀 进入游戏
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function createStars() {
+            const container = document.getElementById('starsContainer');
+            const count = 120;
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 3 + 1;
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const delay = Math.random() * 3;
+                const duration = 1.5 + Math.random() * 2;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = x + '%';
+                star.style.top = y + '%';
+                star.style.animationDelay = delay + 's';
+                star.style.animationDuration = duration + 's';
+                container.appendChild(star);
+            }
+        }
+
+        const statusMessages = [
+            '🌟 正在唤醒蛋仔世界...',
+            '🎈 收集梦幻能量...',
+            '🌈 搭建彩虹桥梁...',
+            '☁️ 召唤神奇云朵...',
+            '🌸 播撒魔法花瓣...',
+            '🦋 释放蝴蝶精灵...',
+            '⭐ 点亮星空...',
+            '🎵 奏响冒险乐章...',
+            '✨ 一切准备就绪！'
+        ];
+
+        function startLoading() {
+            const progressFill = document.getElementById('progressFill');
+            const percentageDisplay = document.getElementById('percentageDisplay');
+            const statusDisplay = document.getElementById('loadingStatus');
+            let progress = 0;
+            let statusIndex = 0;
+            const totalDuration = 5000;
+            const interval = 50;
+            const step = 100 / (totalDuration / interval);
+
+            statusDisplay.textContent = statusMessages[0];
+
+            const timer = setInterval(() => {
+                progress += step;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(timer);
+                    progressFill.style.width = '100%';
+                    percentageDisplay.innerHTML = '100<span class="percent-sign">%</span>';
+                    statusDisplay.textContent = '🎉 加载完成！';
+                    setTimeout(() => {
+                        document.getElementById('completeOverlay').classList.add('active');
+                    }, 500);
+                    return;
+                }
+                progressFill.style.width = progress + '%';
+                const rounded = Math.floor(progress);
+                percentageDisplay.innerHTML = rounded + '<span class="percent-sign">%</span>';
+                const newIndex = Math.floor(progress / 12);
+                if (newIndex < statusMessages.length && newIndex !== statusIndex) {
+                    statusIndex = newIndex;
+                    statusDisplay.innerHTML = statusMessages[newIndex];
+                    const colors = ['#FCD34D', '#A78BFA', '#EC4899', '#6EE7B7', '#F59E0B'];
+                    statusDisplay.style.color = colors[Math.floor(Math.random() * colors.length)];
+                    setTimeout(() => {
+                        statusDisplay.style.color = 'rgba(255, 255, 255, 0.8)';
+                    }, 300);
+                }
+            }, interval);
+        }
+
+        // ✅ 修复：直接跳转到 world.html，没有弹窗
+        function enterGame() {
+            document.getElementById('completeOverlay').classList.remove('active');
+            window.location.href = 'world.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            startLoading();
+        });
+    </script>
+</body>
+</html>
