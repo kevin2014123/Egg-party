@@ -308,7 +308,7 @@
     <div id="hud">
         <div class="left">
             <span class="title">🕯️ 惊魂寻宝队</span>
-            <span class="location" id="locationLabel">🚐 墨镜车</span>
+            <span class="location" id="locationLabel">🚐 摸金车</span>
         </div>
         <div class="right">
             <span class="value" id="valueDisplay">0 <span>万</span></span>
@@ -344,14 +344,13 @@
         // 游戏状态
         // ============================================================
         const gameState = {
-            value: 0, // 当前财富（万）
-            treasureCount: 0, // 已开启宝箱数
-            maxTreasures: 2, // 每局2个宝箱
-            isInCar: true, // 是否在车里
-            isInCastle: false, // 是否在古堡
+            value: 0,
+            treasureCount: 0,
+            maxTreasures: 2,
+            isInCar: true,
+            isInCastle: false,
             isWin: false,
-            treasures: [], // 宝箱列表 { type, position, opened, model }
-            totalWealth: 0, // 总财富
+            treasures: [],
         };
 
         const TREASURE_TYPES = {
@@ -373,8 +372,8 @@
         // 场景、相机、渲染器
         // ============================================================
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a0a);
-        scene.fog = new THREE.Fog(0x0a0a0a, 30, 60);
+        scene.background = new THREE.Color(0x1a1a2e);
+        scene.fog = new THREE.Fog(0x1a1a2e, 40, 70);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(0, 3, 6);
@@ -385,42 +384,58 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
+        renderer.toneMappingExposure = 1.5;
         document.body.appendChild(renderer.domElement);
 
         // ============================================================
-        // 灯光（古堡昏暗风格）
+        // 灯光（古堡明亮风格）
         // ============================================================
-        const ambientLight = new THREE.AmbientLight(0x442233, 0.4);
+        const ambientLight = new THREE.AmbientLight(0x8866aa, 0.8);
         scene.add(ambientLight);
 
-        const sunLight = new THREE.DirectionalLight(0xff8844, 0.3);
-        sunLight.position.set(10, 20, 5);
+        const sunLight = new THREE.DirectionalLight(0xffeedd, 1.5);
+        sunLight.position.set(20, 30, 20);
         sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 1024;
-        sunLight.shadow.mapSize.height = 1024;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
         sunLight.shadow.camera.near = 0.1;
-        sunLight.shadow.camera.far = 50;
-        sunLight.shadow.camera.left = -20;
-        sunLight.shadow.camera.right = 20;
-        sunLight.shadow.camera.top = 20;
-        sunLight.shadow.camera.bottom = -20;
+        sunLight.shadow.camera.far = 60;
+        sunLight.shadow.camera.left = -30;
+        sunLight.shadow.camera.right = 30;
+        sunLight.shadow.camera.top = 30;
+        sunLight.shadow.camera.bottom = -30;
         scene.add(sunLight);
 
-        const candleLight = new THREE.PointLight(0xff6633, 0.8, 20);
-        candleLight.position.set(0, 3, 0);
+        const fillLight = new THREE.DirectionalLight(0x8888ff, 0.6);
+        fillLight.position.set(-20, 20, -20);
+        scene.add(fillLight);
+
+        // 多个暖色点光源让古堡明亮
+        const candleLight = new THREE.PointLight(0xff8844, 2.0, 30);
+        candleLight.position.set(0, 4, 0);
         scene.add(candleLight);
 
-        const candleLight2 = new THREE.PointLight(0xff4400, 0.5, 15);
-        candleLight2.position.set(5, 2, -5);
+        const candleLight2 = new THREE.PointLight(0xff8844, 1.5, 25);
+        candleLight2.position.set(6, 3, -6);
         scene.add(candleLight2);
+
+        const candleLight3 = new THREE.PointLight(0xff8844, 1.5, 25);
+        candleLight3.position.set(-6, 3, -6);
+        scene.add(candleLight3);
+
+        const candleLight4 = new THREE.PointLight(0xff8844, 1.5, 25);
+        candleLight4.position.set(0, 3, 10);
+        scene.add(candleLight4);
+
+        const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x442233, 1.0);
+        scene.add(hemiLight);
 
         // ============================================================
         // 地面（古堡地板）
         // ============================================================
         const floorMat = new THREE.MeshStandardMaterial({
-            color: 0x2a1a10,
-            roughness: 0.9,
+            color: 0x3a2a1a,
+            roughness: 0.8,
             metalness: 0.1,
         });
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), floorMat);
@@ -430,7 +445,7 @@
         scene.add(floor);
 
         // 地板砖纹理线
-        const lineMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 });
+        const lineMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
         for (let i = -20; i <= 20; i += 2) {
             const line1 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.01, 40), lineMat);
             line1.position.set(i, 0.01, 0);
@@ -441,7 +456,7 @@
         }
 
         // ============================================================
-        // 墨镜车（出生点）
+        // 摸金车（出生点）
         // ============================================================
         function createCar() {
             const group = new THREE.Group();
@@ -460,7 +475,7 @@
             roof.castShadow = true;
             group.add(roof);
 
-            // 车窗（墨镜效果）
+            // 车窗
             const glassMat = new THREE.MeshStandardMaterial({
                 color: 0x111122,
                 roughness: 0.1,
@@ -491,7 +506,7 @@
             });
 
             // 前灯
-            const lightMat = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 0.3 });
+            const lightMat = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 0.5 });
             const headlight = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), lightMat);
             headlight.position.set(0.8, 0.4, 1.3);
             group.add(headlight);
@@ -499,16 +514,29 @@
             headlight2.position.set(-0.8, 0.4, 1.3);
             group.add(headlight2);
 
-            // 车门贴纸 "墨镜车"
-            const labelMat = new THREE.MeshStandardMaterial({ color: 0x8888aa, emissive: 0x446688, emissiveIntensity: 0.1 });
-            const label = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.2), labelMat);
+            // 车门贴纸 "摸金车"
+            const labelMat = new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                emissive: 0xff8800,
+                emissiveIntensity: 0.2,
+            });
+            const label = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.25), labelMat);
             label.position.set(0, 0.6, 1.02);
             group.add(label);
 
             // 车内光源（暖光）
-            const interiorLight = new THREE.PointLight(0xff6633, 0.5, 5);
+            const interiorLight = new THREE.PointLight(0xff6633, 0.8, 5);
             interiorLight.position.set(0, 0.8, 0);
             group.add(interiorLight);
+
+            // 摸金车标志（小铲子图标）
+            const shovelMat = new THREE.MeshStandardMaterial({ color: 0xcc8844, metalness: 0.8 });
+            const shovel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.05), shovelMat);
+            shovel.position.set(0.8, 0.75, 1.02);
+            group.add(shovel);
+            const shovel2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.15, 0.05), shovelMat);
+            shovel2.position.set(0.8, 0.65, 1.02);
+            group.add(shovel2);
 
             group.position.set(0, 0, -8);
             return group;
@@ -523,8 +551,8 @@
         function createCastle() {
             const group = new THREE.Group();
 
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 });
-            const wallMatDark = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
+            const wallMatDark = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.8 });
 
             // 主楼
             const main = new THREE.Mesh(new THREE.BoxGeometry(12, 6, 8), wallMat);
@@ -534,25 +562,23 @@
             group.add(main);
 
             // 塔楼
-            const towerMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
+            const towerMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.7 });
             for (let i = 0; i < 4; i++) {
                 const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
                 const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.5, 7, 8), towerMat);
                 tower.position.set(Math.cos(angle) * 6.5, 3.5, Math.sin(angle) * 4.5);
                 tower.castShadow = true;
                 group.add(tower);
-                // 塔尖
                 const spike = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.5, 6), wallMatDark);
                 spike.position.set(Math.cos(angle) * 6.5, 7.5, Math.sin(angle) * 4.5);
                 group.add(spike);
             }
 
             // 门
-            const doorMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
+            const doorMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 });
             const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2), doorMat);
             door.position.set(0, 1, 4.01);
             group.add(door);
-            // 门把手
             const handleMat = new THREE.MeshStandardMaterial({ color: 0x886644, metalness: 0.8 });
             const handle = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), handleMat);
             handle.position.set(0.4, 1.2, 4.02);
@@ -562,9 +588,9 @@
             const winMat = new THREE.MeshStandardMaterial({
                 color: 0xff8844,
                 emissive: 0xff6633,
-                emissiveIntensity: 0.2,
+                emissiveIntensity: 0.3,
                 transparent: true,
-                opacity: 0.6,
+                opacity: 0.7,
             });
             const winPos = [
                 [-2, 3, 4.01],
@@ -584,20 +610,19 @@
             });
 
             // 走廊（从门延伸）
-            const corridorMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 });
+            const corridorMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
             for (let i = 0; i < 3; i++) {
                 const corridor = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3, 2), corridorMat);
                 corridor.position.set(0, 1.5, 6 + i * 2);
                 corridor.castShadow = true;
                 group.add(corridor);
-                // 走廊灯光
-                const light = new THREE.PointLight(0xff6633, 0.3, 4);
+                const light = new THREE.PointLight(0xff6633, 0.5, 4);
                 light.position.set(0, 2.5, 6 + i * 2);
                 group.add(light);
             }
 
             // 房间（两侧）
-            const roomMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
+            const roomMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.7 });
             const roomPos = [
                 [-3, 1.5, 7],
                 [3, 1.5, 7],
@@ -609,7 +634,6 @@
                 room.position.set(pos[0], pos[1], pos[2]);
                 room.castShadow = true;
                 group.add(room);
-                // 房间门
                 const doorSmall = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 1.2), doorMat);
                 doorSmall.position.set(pos[0] > 0 ? pos[0] - 1.26 : pos[0] + 1.26, 1, pos[2]);
                 if (pos[0] > 0) doorSmall.rotation.y = -Math.PI / 2;
@@ -643,46 +667,35 @@
                 icon = '👑';
             }
 
-            const boxMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.6, metalness: type === TREASURE_TYPES
+            const boxMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5, metalness: type === TREASURE_TYPES
                     .GOLD ? 0.8 : 0.1 });
             const box = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.8), boxMat);
             box.position.y = 0.3;
             box.castShadow = true;
             group.add(box);
 
-            // 盖子
-            const lidMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.6, metalness: type === TREASURE_TYPES
+            const lidMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5, metalness: type === TREASURE_TYPES
                     .GOLD ? 0.8 : 0.1 });
             const lid = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.1, 0.85), lidMat);
             lid.position.y = 0.65;
             lid.rotation.x = 0.1;
             group.add(lid);
 
-            // 锁扣
             const lockMat = new THREE.MeshStandardMaterial({ color: 0x886644, metalness: 0.8 });
             const lock = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.05), lockMat);
             lock.position.set(0, 0.6, 0.4);
             group.add(lock);
 
-            // 发光效果
             const glowMat = new THREE.MeshStandardMaterial({
                 color: type === TREASURE_TYPES.GOLD ? 0xffd700 : 0x8B6B4D,
                 emissive: type === TREASURE_TYPES.GOLD ? 0xffd700 : 0x8B6B4D,
-                emissiveIntensity: 0.1,
+                emissiveIntensity: 0.15,
                 transparent: true,
-                opacity: 0.15,
+                opacity: 0.2,
             });
             const glow = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), glowMat);
             glow.position.y = 0.3;
             group.add(glow);
-
-            // 标签（漂浮文字）
-            const labelMat = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                emissive: 0xffffff,
-                emissiveIntensity: 0.1,
-            });
-            // 用平面模拟标签（实际在2D UI里显示）
 
             group.position.set(x, 0, z);
             group.userData = {
@@ -696,7 +709,7 @@
             return group;
         }
 
-        // 放置宝箱（在古堡内随机位置）
+        // 放置宝箱
         function placeTreasures() {
             const positions = [
                 [-2.5, 7],
@@ -731,16 +744,15 @@
         }
 
         // ============================================================
-        // 凤凰蛋（精细建模）
+        // 凤凰蛋
         // ============================================================
         function createPhoenixEgg(x, y, z) {
             const group = new THREE.Group();
 
-            // 蛋体（发光渐变）
             const eggMat = new THREE.MeshStandardMaterial({
                 color: 0xff6633,
                 emissive: 0xff4400,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.4,
                 roughness: 0.2,
                 metalness: 0.5,
             });
@@ -750,11 +762,10 @@
             egg.castShadow = true;
             group.add(egg);
 
-            // 金色纹路
             const lineMat = new THREE.MeshStandardMaterial({
                 color: 0xffd700,
                 emissive: 0xff8800,
-                emissiveIntensity: 0.2,
+                emissiveIntensity: 0.3,
             });
             for (let i = 0; i < 6; i++) {
                 const angle = (i / 6) * Math.PI * 2;
@@ -765,23 +776,21 @@
                 group.add(line);
             }
 
-            // 顶部火焰
             const flameMat = new THREE.MeshStandardMaterial({
                 color: 0xff4400,
                 emissive: 0xff2200,
-                emissiveIntensity: 0.5,
+                emissiveIntensity: 0.7,
                 transparent: true,
-                opacity: 0.7,
+                opacity: 0.8,
             });
             const flame = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 6), flameMat);
             flame.position.y = 0.7;
             group.add(flame);
 
-            // 光晕
             const glowMat = new THREE.MeshStandardMaterial({
                 color: 0xff4400,
                 emissive: 0xff4400,
-                emissiveIntensity: 0.2,
+                emissiveIntensity: 0.3,
                 transparent: true,
                 opacity: 0.15,
             });
@@ -794,16 +803,15 @@
         }
 
         // ============================================================
-        // 王权之心（精细建模）
+        // 王权之心
         // ============================================================
         function createCrownHeart(x, y, z) {
             const group = new THREE.Group();
 
-            // 心形主体
             const heartMat = new THREE.MeshStandardMaterial({
                 color: 0xff0044,
                 emissive: 0xcc0033,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.4,
                 roughness: 0.2,
                 metalness: 0.8,
             });
@@ -813,21 +821,20 @@
             heart.castShadow = true;
             group.add(heart);
 
-            // 心形第二瓣
             const heart2 = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), heartMat);
             heart2.scale.set(1, 1.2, 0.8);
             heart2.position.set(0.25, 0.45, 0);
             group.add(heart2);
+
             const heart3 = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), heartMat);
             heart3.scale.set(1, 1.2, 0.8);
             heart3.position.set(-0.25, 0.45, 0);
             group.add(heart3);
 
-            // 皇冠
             const crownMat = new THREE.MeshStandardMaterial({
                 color: 0xffd700,
                 emissive: 0xff8800,
-                emissiveIntensity: 0.1,
+                emissiveIntensity: 0.2,
                 metalness: 0.9,
                 roughness: 0.2,
             });
@@ -835,7 +842,6 @@
             crown.position.y = 0.75;
             group.add(crown);
 
-            // 皇冠尖
             for (let i = 0; i < 5; i++) {
                 const angle = (i / 5) * Math.PI * 2;
                 const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 4), crownMat);
@@ -845,11 +851,10 @@
                 group.add(spike);
             }
 
-            // 宝石
             const gemMat = new THREE.MeshStandardMaterial({
                 color: 0xff0044,
                 emissive: 0xff0044,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.4,
                 transparent: true,
                 opacity: 0.8,
                 metalness: 0.1,
@@ -858,13 +863,12 @@
             gem.position.set(0, 0.8, 0.25);
             group.add(gem);
 
-            // 光晕
             const glowMat = new THREE.MeshStandardMaterial({
                 color: 0xff0044,
                 emissive: 0xff0044,
-                emissiveIntensity: 0.2,
+                emissiveIntensity: 0.3,
                 transparent: true,
-                opacity: 0.1,
+                opacity: 0.15,
             });
             const glow = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 8), glowMat);
             glow.position.y = 0.4;
@@ -875,7 +879,7 @@
         }
 
         // ============================================================
-        // 玩家（蛋仔角色）
+        // 玩家
         // ============================================================
         function createPlayer() {
             const group = new THREE.Group();
@@ -929,7 +933,6 @@
         let isOnGround = true;
         let isJumping = false;
 
-        // 摇杆
         const joystickArea = document.getElementById('joystick-area');
         const joystickKnob = document.getElementById('joystick-knob');
         let joystickActive = false;
@@ -1006,7 +1009,6 @@
         }, { passive: false });
         window.addEventListener('touchcancel', () => { if (joystickTouchId !== null) handleJoystickEnd(); });
 
-        // 跳跃
         const jumpBtn = document.getElementById('jump-btn');
 
         function doJump() {
@@ -1014,7 +1016,6 @@
                 velocityY = jumpSpeed;
                 isOnGround = false;
                 isJumping = true;
-                // 检测是否在宝箱附近
                 checkNearTreasure();
             }
         }
@@ -1040,7 +1041,6 @@
                 }
             }
             if (!found) {
-                // 如果不在宝箱附近，尝试切换到古堡/车辆
                 toggleLocation();
             }
         }
@@ -1051,10 +1051,8 @@
             gameState.treasureCount++;
             updateTreasureCount();
 
-            // 从场景移除宝箱模型
             scene.remove(treasure.mesh);
 
-            // 生成对应的宝物模型
             const pos = treasure.position;
             let model;
             if (treasure.type === TREASURE_TYPES.WOOD) {
@@ -1068,16 +1066,13 @@
             }
             scene.add(model);
 
-            // 更新显示
             updateValueDisplay();
 
-            // 检查是否集齐所有宝箱
             if (gameState.treasureCount >= gameState.maxTreasures) {
                 document.getElementById('game-status').textContent = '🎉 所有宝箱已开启！点击"上交全部"撤离！';
                 document.getElementById('submit-btn').disabled = false;
             }
 
-            // 震动反馈（如果有）
             if (navigator.vibrate) navigator.vibrate(50);
         }
 
@@ -1087,14 +1082,13 @@
                 gameState.isInCastle = true;
                 document.getElementById('locationLabel').textContent = '🏰 温斯洛古堡';
                 document.getElementById('game-status').textContent = '🔍 探索古堡，寻找宝箱！';
-                // 移动玩家到古堡门口
                 player.position.set(0, 0, 4);
                 document.getElementById('controls-hint').textContent = '🕹️ 探索古堡 · 靠近宝箱跳跃开启';
             } else if (gameState.isInCastle) {
                 gameState.isInCastle = false;
                 gameState.isInCar = true;
-                document.getElementById('locationLabel').textContent = '🚐 墨镜车';
-                document.getElementById('game-status').textContent = '🔙 已返回墨镜车';
+                document.getElementById('locationLabel').textContent = '🚐 摸金车';
+                document.getElementById('game-status').textContent = '🔙 已返回摸金车';
                 player.position.set(0, 0, -8);
             }
         }
@@ -1104,7 +1098,6 @@
         // ============================================================
         function submitAll() {
             if (gameState.value >= 100) {
-                // 胜利！
                 gameState.isWin = true;
                 document.getElementById('winValue').textContent = gameState.value;
                 document.getElementById('win-overlay').classList.add('active');
@@ -1162,20 +1155,16 @@
         // 初始化游戏
         // ============================================================
         function initGame() {
-            // 玩家出生在车里
             player.position.set(0, 0, -8);
-            document.getElementById('locationLabel').textContent = '🚐 墨镜车';
+            document.getElementById('locationLabel').textContent = '🚐 摸金车';
             document.getElementById('submit-btn').disabled = true;
             gameState.isInCar = true;
 
-            // 放置宝箱
             placeTreasures();
 
-            // 更新UI
             updateValueDisplay();
             updateTreasureCount();
 
-            // 自动进入古堡提示
             setTimeout(() => {
                 document.getElementById('game-status').textContent = '🚶 向前走进入古堡...';
             }, 1500);
@@ -1192,7 +1181,6 @@
             const delta = Math.min(clock.getDelta(), 0.05);
             time += delta;
 
-            // ---- 玩家移动 ----
             const moveX = joystickData.x;
             const moveZ = joystickData.y;
 
@@ -1230,7 +1218,7 @@
                 player.position.z += moveVec.z;
             }
 
-            // 自动进出古堡（通过z轴位置判断）
+            // 自动进出古堡
             if (player.position.z > 3 && player.position.z < 5 && !gameState.isInCastle && !gameState.isInCar) {
                 gameState.isInCastle = true;
                 gameState.isInCar = false;
@@ -1240,11 +1228,11 @@
             if (player.position.z < -5 && !gameState.isInCar && !gameState.isInCastle) {
                 gameState.isInCar = true;
                 gameState.isInCastle = false;
-                document.getElementById('locationLabel').textContent = '🚐 墨镜车';
-                document.getElementById('game-status').textContent = '🔙 已返回墨镜车';
+                document.getElementById('locationLabel').textContent = '🚐 摸金车';
+                document.getElementById('game-status').textContent = '🔙 已返回摸金车';
             }
 
-            // ---- 跳跃物理 ----
+            // 跳跃物理
             if (!isOnGround) {
                 velocityY -= 12 * delta;
                 player.position.y += velocityY * delta;
@@ -1256,11 +1244,10 @@
                 }
             }
 
-            // 呼吸动画
             const breathe = Math.sin(time * 2) * 0.005;
             player.position.y += breathe;
 
-            // ---- 宝箱旋转动画 ----
+            // 宝箱旋转
             gameState.treasures.forEach(t => {
                 if (!t.opened && t.mesh) {
                     t.mesh.rotation.y += delta * 0.8;
@@ -1268,32 +1255,32 @@
                 }
             });
 
-            // ---- 蜡烛光闪烁 ----
-            candleLight.intensity = 0.6 + Math.sin(time * 3) * 0.2;
-            candleLight2.intensity = 0.4 + Math.sin(time * 2.5 + 1) * 0.15;
+            // 蜡烛光闪烁
+            candleLight.intensity = 1.8 + Math.sin(time * 3) * 0.3;
+            candleLight2.intensity = 1.3 + Math.sin(time * 2.5 + 1) * 0.25;
+            candleLight3.intensity = 1.3 + Math.sin(time * 2.8 + 2) * 0.25;
+            candleLight4.intensity = 1.3 + Math.sin(time * 3.2 + 0.5) * 0.25;
 
-            // ---- 凤凰蛋特效 ----
+            // 凤凰蛋/王权之心特效
             scene.children.forEach(child => {
                 if (child.isMesh && child.material && child.material.emissiveIntensity !== undefined) {
                     if (child.material.color.getHex() === 0xff6633 || child.material.color.getHex() === 0xff0044) {
-                        child.material.emissiveIntensity = 0.2 + Math.sin(time * 2 + child.position.x) * 0.15;
+                        child.material.emissiveIntensity = 0.3 + Math.sin(time * 2 + child.position.x) * 0.2;
                     }
                 }
             });
 
-            // ---- 更新相机 ----
             updateCamera();
 
             renderer.render(scene, camera);
         }
 
-        // 初始化相机
         updateCamera();
         animate();
 
         console.log('🕯️ 惊魂寻宝队已加载！');
         console.log('📦 找到2个宝箱，集齐100万撤离！');
-        console.log('🚐 出生在墨镜车，走向古堡探索！');
+        console.log('🚐 出生在摸金车，走向古堡探索！');
     </script>
 </body>
 </html>
