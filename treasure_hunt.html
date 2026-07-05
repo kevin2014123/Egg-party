@@ -60,7 +60,7 @@
             height: 100%;
         }
 
-        /* ===== 顶部HUD ===== */
+        /* HUD */
         #hud {
             position: fixed;
             top: 0;
@@ -79,6 +79,7 @@
             display: flex;
             align-items: center;
             gap: 16px;
+            flex-wrap: wrap;
         }
         #hud .left .title {
             font-size: 18px;
@@ -106,7 +107,34 @@
             color: #fff;
         }
 
-        /* ===== 上交按钮 ===== */
+        /* 进入古堡按钮 */
+        #enter-btn {
+            position: fixed;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            padding: 14px 40px;
+            border-radius: 50px;
+            border: none;
+            background: linear-gradient(135deg, #8B5CF6, #6d28d9);
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Comic Sans MS', cursive;
+            cursor: pointer;
+            box-shadow: 0 4px 30px rgba(139,92,246,0.4);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+        #enter-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+        #enter-btn.hidden {
+            display: none;
+        }
+
+        /* 上交按钮 */
         #submit-btn {
             position: fixed;
             bottom: 100px;
@@ -134,10 +162,9 @@
             cursor: not-allowed;
         }
 
-        /* ===== 游戏状态提示 ===== */
         #game-status {
             position: fixed;
-            bottom: 170px;
+            bottom: 240px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
@@ -149,9 +176,9 @@
             border-radius: 20px;
             backdrop-filter: blur(4px);
             pointer-events: none;
+            max-width: 90%;
         }
 
-        /* ===== 撤离成功遮罩 ===== */
         #win-overlay {
             position: fixed;
             top: 0;
@@ -204,7 +231,6 @@
             transform: scale(0.95);
         }
 
-        /* ===== 摇杆和跳跃 (保留) ===== */
         #joystick-area {
             position: fixed;
             bottom: 30px;
@@ -285,7 +311,8 @@
             #joystick-knob { width: 45px; height: 45px; }
             #jump-btn { width: 60px; height: 60px; bottom: 30px; right: 20px; font-size: 24px; }
             #submit-btn { font-size: 15px; padding: 12px 28px; bottom: 80px; }
-            #game-status { bottom: 140px; font-size: 12px; padding: 4px 14px; }
+            #enter-btn { font-size: 15px; padding: 12px 28px; bottom: 140px; }
+            #game-status { bottom: 200px; font-size: 12px; padding: 4px 14px; }
             #hud .left .title { font-size: 15px; }
             #hud .right .value { font-size: 16px; }
             #controls-hint { font-size: 10px; bottom: 130px; }
@@ -304,7 +331,6 @@
         <div>🕯️ 正在进入古堡...</div>
     </div>
 
-    <!-- HUD -->
     <div id="hud">
         <div class="left">
             <span class="title">🕯️ 惊魂寻宝队</span>
@@ -316,20 +342,17 @@
         </div>
     </div>
 
-    <!-- 游戏状态 -->
-    <div id="game-status">🔍 探索古堡，寻找宝箱！</div>
+    <div id="game-status">🔍 点击「进入古堡」开始探险！</div>
 
-    <!-- 上交按钮 -->
-    <button id="submit-btn" onclick="submitAll()">📦 上交全部</button>
+    <button id="enter-btn" onclick="enterCastle()">🏰 进入古堡</button>
+    <button id="submit-btn" onclick="submitAll()" disabled>📦 上交全部</button>
 
-    <!-- 摇杆 -->
     <div id="joystick-area">
         <div id="joystick-knob"></div>
     </div>
     <div id="jump-btn">⬆</div>
-    <div id="controls-hint">🕹️ 移动 · ⬆ 交互</div>
+    <div id="controls-hint">🕹️ 移动 · ⬆ 开启宝箱</div>
 
-    <!-- 胜利界面 -->
     <div id="win-overlay">
         <div class="big-icon">🚐</div>
         <h2>🎉 成功撤离！</h2>
@@ -373,10 +396,10 @@
         // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a1a2e);
-        scene.fog = new THREE.Fog(0x1a1a2e, 40, 70);
+        scene.fog = new THREE.Fog(0x1a1a2e, 50, 90);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 3, 6);
+        camera.position.set(0, 8, 14);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -388,7 +411,7 @@
         document.body.appendChild(renderer.domElement);
 
         // ============================================================
-        // 灯光（古堡明亮风格）
+        // 灯光
         // ============================================================
         const ambientLight = new THREE.AmbientLight(0x8866aa, 0.8);
         scene.add(ambientLight);
@@ -399,83 +422,101 @@
         sunLight.shadow.mapSize.width = 2048;
         sunLight.shadow.mapSize.height = 2048;
         sunLight.shadow.camera.near = 0.1;
-        sunLight.shadow.camera.far = 60;
-        sunLight.shadow.camera.left = -30;
-        sunLight.shadow.camera.right = 30;
-        sunLight.shadow.camera.top = 30;
-        sunLight.shadow.camera.bottom = -30;
+        sunLight.shadow.camera.far = 80;
+        sunLight.shadow.camera.left = -40;
+        sunLight.shadow.camera.right = 40;
+        sunLight.shadow.camera.top = 40;
+        sunLight.shadow.camera.bottom = -40;
         scene.add(sunLight);
 
         const fillLight = new THREE.DirectionalLight(0x8888ff, 0.6);
         fillLight.position.set(-20, 20, -20);
         scene.add(fillLight);
 
-        // 多个暖色点光源让古堡明亮
-        const candleLight = new THREE.PointLight(0xff8844, 2.0, 30);
-        candleLight.position.set(0, 4, 0);
+        const candleLight = new THREE.PointLight(0xff8844, 2.0, 40);
+        candleLight.position.set(0, 6, 0);
         scene.add(candleLight);
 
-        const candleLight2 = new THREE.PointLight(0xff8844, 1.5, 25);
-        candleLight2.position.set(6, 3, -6);
+        const candleLight2 = new THREE.PointLight(0xff8844, 1.5, 35);
+        candleLight2.position.set(10, 5, -10);
         scene.add(candleLight2);
 
-        const candleLight3 = new THREE.PointLight(0xff8844, 1.5, 25);
-        candleLight3.position.set(-6, 3, -6);
+        const candleLight3 = new THREE.PointLight(0xff8844, 1.5, 35);
+        candleLight3.position.set(-10, 5, -10);
         scene.add(candleLight3);
 
-        const candleLight4 = new THREE.PointLight(0xff8844, 1.5, 25);
-        candleLight4.position.set(0, 3, 10);
+        const candleLight4 = new THREE.PointLight(0xff8844, 1.5, 35);
+        candleLight4.position.set(0, 5, 16);
         scene.add(candleLight4);
 
         const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x442233, 1.0);
         scene.add(hemiLight);
 
         // ============================================================
-        // 地面（古堡地板）
+        // 地面
         // ============================================================
         const floorMat = new THREE.MeshStandardMaterial({
             color: 0x3a2a1a,
             roughness: 0.8,
             metalness: 0.1,
         });
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), floorMat);
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -0.05;
         floor.receiveShadow = true;
         scene.add(floor);
 
-        // 地板砖纹理线
         const lineMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
-        for (let i = -20; i <= 20; i += 2) {
-            const line1 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.01, 40), lineMat);
+        for (let i = -30; i <= 30; i += 2.5) {
+            const line1 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.01, 60), lineMat);
             line1.position.set(i, 0.01, 0);
             scene.add(line1);
-            const line2 = new THREE.Mesh(new THREE.BoxGeometry(40, 0.01, 0.05), lineMat);
+            const line2 = new THREE.Mesh(new THREE.BoxGeometry(60, 0.01, 0.05), lineMat);
             line2.position.set(0, 0.01, i);
             scene.add(line2);
         }
 
         // ============================================================
-        // 摸金车（出生点）
+        // 碰撞箱系统
+        // ============================================================
+        const obstacles = [];
+
+        function addObstacle(x, z, radius) {
+            obstacles.push({ x: x, z: z, radius: radius });
+        }
+
+        function checkCollision(newX, newZ, playerRadius) {
+            for (let obs of obstacles) {
+                const dx = newX - obs.x;
+                const dz = newZ - obs.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < playerRadius + obs.radius) {
+                    return true;
+                }
+            }
+            // 边界限制
+            if (Math.abs(newX) > 28 || Math.abs(newZ) > 28) return true;
+            return false;
+        }
+
+        // ============================================================
+        // 摸金车
         // ============================================================
         function createCar() {
             const group = new THREE.Group();
 
-            // 车身
             const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.3, metalness: 0.8 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(3, 1.2, 2), bodyMat);
-            body.position.y = 0.6;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.4, 2.2), bodyMat);
+            body.position.y = 0.7;
             body.castShadow = true;
             group.add(body);
 
-            // 车顶
             const roofMat = new THREE.MeshStandardMaterial({ color: 0x2a2a3e, roughness: 0.4, metalness: 0.6 });
-            const roof = new THREE.Mesh(new THREE.BoxGeometry(2, 0.6, 1.6), roofMat);
-            roof.position.set(0, 1.3, 0);
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.7, 1.8), roofMat);
+            roof.position.set(0, 1.5, 0);
             roof.castShadow = true;
             group.add(roof);
 
-            // 车窗
             const glassMat = new THREE.MeshStandardMaterial({
                 color: 0x111122,
                 roughness: 0.1,
@@ -483,70 +524,58 @@
                 transparent: true,
                 opacity: 0.7,
             });
-            const glass = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.4, 0.1), glassMat);
-            glass.position.set(0, 0.9, 1.01);
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 0.1), glassMat);
+            glass.position.set(0, 1.0, 1.11);
             group.add(glass);
-            const glass2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.4, 0.1), glassMat);
-            glass2.position.set(0, 0.9, -1.01);
+            const glass2 = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 0.1), glassMat);
+            glass2.position.set(0, 1.0, -1.11);
             group.add(glass2);
 
-            // 车轮
             const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
             const wheelPos = [
-                [-1.2, 0.2, 1.1],
-                [1.2, 0.2, 1.1],
-                [-1.2, 0.2, -1.1],
-                [1.2, 0.2, -1.1]
+                [-1.4, 0.2, 1.2],
+                [1.4, 0.2, 1.2],
+                [-1.4, 0.2, -1.2],
+                [1.4, 0.2, -1.2]
             ];
             wheelPos.forEach(pos => {
-                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 8), wheelMat);
+                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.15, 8), wheelMat);
                 wheel.rotation.x = Math.PI / 2;
                 wheel.position.set(pos[0], pos[1], pos[2]);
                 group.add(wheel);
             });
 
-            // 前灯
             const lightMat = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 0.5 });
-            const headlight = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), lightMat);
-            headlight.position.set(0.8, 0.4, 1.3);
+            const headlight = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), lightMat);
+            headlight.position.set(0.9, 0.5, 1.4);
             group.add(headlight);
-            const headlight2 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), lightMat);
-            headlight2.position.set(-0.8, 0.4, 1.3);
+            const headlight2 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), lightMat);
+            headlight2.position.set(-0.9, 0.5, 1.4);
             group.add(headlight2);
 
-            // 车门贴纸 "摸金车"
             const labelMat = new THREE.MeshStandardMaterial({
                 color: 0xffd700,
                 emissive: 0xff8800,
                 emissiveIntensity: 0.2,
             });
-            const label = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.25), labelMat);
-            label.position.set(0, 0.6, 1.02);
+            const label = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.3), labelMat);
+            label.position.set(0, 0.7, 1.12);
             group.add(label);
 
-            // 车内光源（暖光）
             const interiorLight = new THREE.PointLight(0xff6633, 0.8, 5);
             interiorLight.position.set(0, 0.8, 0);
             group.add(interiorLight);
 
-            // 摸金车标志（小铲子图标）
-            const shovelMat = new THREE.MeshStandardMaterial({ color: 0xcc8844, metalness: 0.8 });
-            const shovel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.05), shovelMat);
-            shovel.position.set(0.8, 0.75, 1.02);
-            group.add(shovel);
-            const shovel2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.15, 0.05), shovelMat);
-            shovel2.position.set(0.8, 0.65, 1.02);
-            group.add(shovel2);
-
-            group.position.set(0, 0, -8);
+            group.position.set(0, 0, -12);
             return group;
         }
 
         const car = createCar();
         scene.add(car);
+        addObstacle(0, -12, 2.5);
 
         // ============================================================
-        // 古堡建筑
+        // 古堡（放大版）
         // ============================================================
         function createCastle() {
             const group = new THREE.Group();
@@ -554,37 +583,45 @@
             const wallMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
             const wallMatDark = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.8 });
 
-            // 主楼
-            const main = new THREE.Mesh(new THREE.BoxGeometry(12, 6, 8), wallMat);
-            main.position.set(0, 3, 0);
+            // 主楼（放大）
+            const main = new THREE.Mesh(new THREE.BoxGeometry(20, 8, 14), wallMat);
+            main.position.set(0, 4, 0);
             main.castShadow = true;
             main.receiveShadow = true;
             group.add(main);
+            addObstacle(0, 0, 12);
+            addObstacle(0, 0, 10);
 
-            // 塔楼
+            // 塔楼（放大）
             const towerMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.7 });
-            for (let i = 0; i < 4; i++) {
-                const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
-                const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.5, 7, 8), towerMat);
-                tower.position.set(Math.cos(angle) * 6.5, 3.5, Math.sin(angle) * 4.5);
+            const towerPositions = [
+                [-9, -6],
+                [9, -6],
+                [-9, 6],
+                [9, 6]
+            ];
+            towerPositions.forEach(pos => {
+                const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.2, 9, 8), towerMat);
+                tower.position.set(pos[0], 4.5, pos[1]);
                 tower.castShadow = true;
                 group.add(tower);
-                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.5, 6), wallMatDark);
-                spike.position.set(Math.cos(angle) * 6.5, 7.5, Math.sin(angle) * 4.5);
+                addObstacle(pos[0], pos[1], 2.2);
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2, 6), wallMatDark);
+                spike.position.set(pos[0], 9.5, pos[1]);
                 group.add(spike);
-            }
+            });
 
-            // 门
+            // 大门（放大）
             const doorMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 });
-            const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2), doorMat);
-            door.position.set(0, 1, 4.01);
+            const door = new THREE.Mesh(new THREE.PlaneGeometry(2, 3), doorMat);
+            door.position.set(0, 1.5, 7.01);
             group.add(door);
             const handleMat = new THREE.MeshStandardMaterial({ color: 0x886644, metalness: 0.8 });
-            const handle = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), handleMat);
-            handle.position.set(0.4, 1.2, 4.02);
+            const handle = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 6), handleMat);
+            handle.position.set(0.6, 1.8, 7.02);
             group.add(handle);
 
-            // 窗户（发光）
+            // 窗户（发光，放大）
             const winMat = new THREE.MeshStandardMaterial({
                 color: 0xff8844,
                 emissive: 0xff6633,
@@ -593,49 +630,58 @@
                 opacity: 0.7,
             });
             const winPos = [
-                [-2, 3, 4.01],
-                [2, 3, 4.01],
-                [-1, 4.5, 4.01],
-                [1, 4.5, 4.01],
-                [-3, 2, -4.01],
-                [3, 2, -4.01],
-                [-4, 3, -4.01],
-                [4, 3, -4.01],
+                [-3, 4, 7.01],
+                [3, 4, 7.01],
+                [-1.5, 6, 7.01],
+                [1.5, 6, 7.01],
+                [-4, 3, -7.01],
+                [4, 3, -7.01],
+                [-5, 4.5, -7.01],
+                [5, 4.5, -7.01],
+                [-7, 3, -3],
+                [7, 3, -3],
+                [-7, 4.5, 3],
+                [7, 4.5, 3],
             ];
             winPos.forEach(pos => {
-                const win = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), winMat);
+                const win = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), winMat);
                 win.position.set(pos[0], pos[1], pos[2]);
                 if (pos[2] < 0) win.rotation.y = Math.PI;
                 group.add(win);
             });
 
-            // 走廊（从门延伸）
+            // 走廊（放大）
             const corridorMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.8 });
-            for (let i = 0; i < 3; i++) {
-                const corridor = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3, 2), corridorMat);
-                corridor.position.set(0, 1.5, 6 + i * 2);
+            for (let i = 0; i < 4; i++) {
+                const corridor = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 3), corridorMat);
+                corridor.position.set(0, 2, 10 + i * 3);
                 corridor.castShadow = true;
                 group.add(corridor);
-                const light = new THREE.PointLight(0xff6633, 0.5, 4);
-                light.position.set(0, 2.5, 6 + i * 2);
+                addObstacle(0, 10 + i * 3, 2.5);
+                const light = new THREE.PointLight(0xff6633, 0.5, 5);
+                light.position.set(0, 3, 10 + i * 3);
                 group.add(light);
             }
 
-            // 房间（两侧）
+            // 房间（放大）
             const roomMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.7 });
             const roomPos = [
-                [-3, 1.5, 7],
-                [3, 1.5, 7],
-                [-3, 1.5, 9],
-                [3, 1.5, 9],
+                [-5, 2, 11],
+                [5, 2, 11],
+                [-5, 2, 14],
+                [5, 2, 14],
+                [-5, 2, 17],
+                [5, 2, 17],
             ];
             roomPos.forEach(pos => {
-                const room = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), roomMat);
+                const room = new THREE.Mesh(new THREE.BoxGeometry(4, 3.5, 3.5), roomMat);
                 room.position.set(pos[0], pos[1], pos[2]);
                 room.castShadow = true;
                 group.add(room);
-                const doorSmall = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 1.2), doorMat);
-                doorSmall.position.set(pos[0] > 0 ? pos[0] - 1.26 : pos[0] + 1.26, 1, pos[2]);
+                addObstacle(pos[0], pos[2], 2.5);
+                // 房间门
+                const doorSmall = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.8), doorMat);
+                doorSmall.position.set(pos[0] > 0 ? pos[0] - 2.01 : pos[0] + 2.01, 1.2, pos[2]);
                 if (pos[0] > 0) doorSmall.rotation.y = -Math.PI / 2;
                 else doorSmall.rotation.y = Math.PI / 2;
                 group.add(doorSmall);
@@ -649,53 +695,78 @@
         scene.add(castle);
 
         // ============================================================
-        // 宝箱
+        // 宝箱（鲜明颜色 + 发光）
         // ============================================================
         function createTreasureBox(type, x, z) {
             const group = new THREE.Group();
-            let color, name, value, icon;
+            let color, name, value, icon, glowColor;
 
             if (type === TREASURE_TYPES.WOOD) {
-                color = 0x8B6B4D;
+                color = 0x8B6B4D; // 棕色
                 name = '木头宝箱';
                 value = 25;
                 icon = '📦';
+                glowColor = 0x8B6B4D;
             } else {
-                color = 0xFFD700;
+                color = 0xFFD700; // 金色
                 name = '金色宝箱';
                 value = 50;
                 icon = '👑';
+                glowColor = 0xFFD700;
             }
 
-            const boxMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5, metalness: type === TREASURE_TYPES
-                    .GOLD ? 0.8 : 0.1 });
-            const box = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.8), boxMat);
-            box.position.y = 0.3;
+            const boxMat = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.4,
+                metalness: type === TREASURE_TYPES.GOLD ? 0.8 : 0.1,
+                emissive: glowColor,
+                emissiveIntensity: 0.15,
+            });
+            const box = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.8, 1.0), boxMat);
+            box.position.y = 0.4;
             box.castShadow = true;
             group.add(box);
 
-            const lidMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5, metalness: type === TREASURE_TYPES
-                    .GOLD ? 0.8 : 0.1 });
-            const lid = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.1, 0.85), lidMat);
-            lid.position.y = 0.65;
+            const lidMat = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.4,
+                metalness: type === TREASURE_TYPES.GOLD ? 0.8 : 0.1,
+                emissive: glowColor,
+                emissiveIntensity: 0.15,
+            });
+            const lid = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.12, 1.05), lidMat);
+            lid.position.y = 0.86;
             lid.rotation.x = 0.1;
             group.add(lid);
 
             const lockMat = new THREE.MeshStandardMaterial({ color: 0x886644, metalness: 0.8 });
-            const lock = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.05), lockMat);
-            lock.position.set(0, 0.6, 0.4);
+            const lock = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.06), lockMat);
+            lock.position.set(0, 0.8, 0.5);
             group.add(lock);
 
+            // 强发光光晕
             const glowMat = new THREE.MeshStandardMaterial({
-                color: type === TREASURE_TYPES.GOLD ? 0xffd700 : 0x8B6B4D,
-                emissive: type === TREASURE_TYPES.GOLD ? 0xffd700 : 0x8B6B4D,
-                emissiveIntensity: 0.15,
+                color: glowColor,
+                emissive: glowColor,
+                emissiveIntensity: 0.4,
                 transparent: true,
-                opacity: 0.2,
+                opacity: 0.25,
             });
-            const glow = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), glowMat);
-            glow.position.y = 0.3;
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), glowMat);
+            glow.position.y = 0.4;
             group.add(glow);
+
+            // 顶部光柱
+            const pillarMat = new THREE.MeshStandardMaterial({
+                color: glowColor,
+                emissive: glowColor,
+                emissiveIntensity: 0.3,
+                transparent: true,
+                opacity: 0.15,
+            });
+            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 2.5, 6), pillarMat);
+            pillar.position.set(0, 1.8, 0);
+            group.add(pillar);
 
             group.position.set(x, 0, z);
             group.userData = {
@@ -709,20 +780,22 @@
             return group;
         }
 
+        // ============================================================
         // 放置宝箱
+        // ============================================================
         function placeTreasures() {
             const positions = [
-                [-2.5, 7],
-                [2.5, 7],
-                [-2.5, 9],
-                [2.5, 9],
-                [-1, 7.5],
-                [1, 7.5],
-                [-3, 5],
-                [3, 5],
-                [0, 10],
-                [-3, 10],
-                [3, 10],
+                [-4, 11],
+                [4, 11],
+                [-4, 14],
+                [4, 14],
+                [-4, 17],
+                [4, 17],
+                [-2, 12],
+                [2, 12],
+                [-6, 10],
+                [6, 10],
+                [0, 19],
             ];
             const shuffled = positions.sort(() => Math.random() - 0.5);
             const selected = shuffled.slice(0, 2);
@@ -731,6 +804,8 @@
                 const type = index === 0 ? TREASURE_TYPES.WOOD : TREASURE_TYPES.GOLD;
                 const treasure = createTreasureBox(type, pos[0], pos[1]);
                 scene.add(treasure);
+                // 给宝箱添加碰撞
+                addObstacle(pos[0], pos[1], 0.8);
                 gameState.treasures.push({
                     mesh: treasure,
                     type: type,
@@ -752,25 +827,25 @@
             const eggMat = new THREE.MeshStandardMaterial({
                 color: 0xff6633,
                 emissive: 0xff4400,
-                emissiveIntensity: 0.4,
+                emissiveIntensity: 0.5,
                 roughness: 0.2,
                 metalness: 0.5,
             });
-            const egg = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), eggMat);
+            const egg = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), eggMat);
             egg.scale.set(0.9, 1.2, 0.9);
-            egg.position.y = 0.35;
+            egg.position.y = 0.5;
             egg.castShadow = true;
             group.add(egg);
 
             const lineMat = new THREE.MeshStandardMaterial({
                 color: 0xffd700,
                 emissive: 0xff8800,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.4,
             });
-            for (let i = 0; i < 6; i++) {
-                const angle = (i / 6) * Math.PI * 2;
-                const line = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.015, 4, 8), lineMat);
-                line.position.set(0, 0.35, 0);
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const line = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.02, 4, 8), lineMat);
+                line.position.set(0, 0.5, 0);
                 line.rotation.x = Math.PI / 2;
                 line.rotation.z = angle;
                 group.add(line);
@@ -779,23 +854,23 @@
             const flameMat = new THREE.MeshStandardMaterial({
                 color: 0xff4400,
                 emissive: 0xff2200,
-                emissiveIntensity: 0.7,
+                emissiveIntensity: 0.8,
                 transparent: true,
                 opacity: 0.8,
             });
-            const flame = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 6), flameMat);
-            flame.position.y = 0.7;
+            const flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 6), flameMat);
+            flame.position.y = 1.0;
             group.add(flame);
 
             const glowMat = new THREE.MeshStandardMaterial({
                 color: 0xff4400,
                 emissive: 0xff4400,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.4,
                 transparent: true,
                 opacity: 0.15,
             });
-            const glow = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), glowMat);
-            glow.position.y = 0.35;
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), glowMat);
+            glow.position.y = 0.5;
             group.add(glow);
 
             group.position.set(x, y, z);
@@ -811,67 +886,67 @@
             const heartMat = new THREE.MeshStandardMaterial({
                 color: 0xff0044,
                 emissive: 0xcc0033,
-                emissiveIntensity: 0.4,
+                emissiveIntensity: 0.5,
                 roughness: 0.2,
                 metalness: 0.8,
             });
-            const heart = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), heartMat);
+            const heart = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), heartMat);
             heart.scale.set(1, 1.2, 0.8);
-            heart.position.y = 0.3;
+            heart.position.y = 0.4;
             heart.castShadow = true;
             group.add(heart);
 
-            const heart2 = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), heartMat);
+            const heart2 = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), heartMat);
             heart2.scale.set(1, 1.2, 0.8);
-            heart2.position.set(0.25, 0.45, 0);
+            heart2.position.set(0.3, 0.6, 0);
             group.add(heart2);
 
-            const heart3 = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), heartMat);
+            const heart3 = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), heartMat);
             heart3.scale.set(1, 1.2, 0.8);
-            heart3.position.set(-0.25, 0.45, 0);
+            heart3.position.set(-0.3, 0.6, 0);
             group.add(heart3);
 
             const crownMat = new THREE.MeshStandardMaterial({
                 color: 0xffd700,
                 emissive: 0xff8800,
-                emissiveIntensity: 0.2,
+                emissiveIntensity: 0.3,
                 metalness: 0.9,
                 roughness: 0.2,
             });
-            const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 0.15, 8), crownMat);
-            crown.position.y = 0.75;
+            const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.2, 8), crownMat);
+            crown.position.y = 1.0;
             group.add(crown);
 
-            for (let i = 0; i < 5; i++) {
-                const angle = (i / 5) * Math.PI * 2;
-                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 4), crownMat);
-                spike.position.set(Math.cos(angle) * 0.38, 0.85, Math.sin(angle) * 0.38);
-                spike.rotation.z = Math.cos(angle) * 0.2;
-                spike.rotation.x = Math.sin(angle) * 0.2;
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 4), crownMat);
+                spike.position.set(Math.cos(angle) * 0.52, 1.15, Math.sin(angle) * 0.52);
+                spike.rotation.z = Math.cos(angle) * 0.3;
+                spike.rotation.x = Math.sin(angle) * 0.3;
                 group.add(spike);
             }
 
             const gemMat = new THREE.MeshStandardMaterial({
                 color: 0xff0044,
                 emissive: 0xff0044,
-                emissiveIntensity: 0.4,
+                emissiveIntensity: 0.5,
                 transparent: true,
                 opacity: 0.8,
                 metalness: 0.1,
             });
-            const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.08), gemMat);
-            gem.position.set(0, 0.8, 0.25);
+            const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.1), gemMat);
+            gem.position.set(0, 1.05, 0.35);
             group.add(gem);
 
             const glowMat = new THREE.MeshStandardMaterial({
                 color: 0xff0044,
                 emissive: 0xff0044,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.4,
                 transparent: true,
                 opacity: 0.15,
             });
-            const glow = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 8), glowMat);
-            glow.position.y = 0.4;
+            const glow = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), glowMat);
+            glow.position.y = 0.5;
             group.add(glow);
 
             group.position.set(x, y, z);
@@ -885,54 +960,196 @@
             const group = new THREE.Group();
 
             const bodyMat = new THREE.MeshStandardMaterial({ color: 0xFFD54F, roughness: 0.3 });
-            const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), bodyMat);
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 12), bodyMat);
             body.scale.set(1, 0.85, 1);
-            body.position.y = 0.5;
+            body.position.y = 0.6;
             body.castShadow = true;
             group.add(body);
 
             const bellyMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
-            const belly = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), bellyMat);
+            const belly = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), bellyMat);
             belly.scale.set(0.9, 0.8, 0.5);
-            belly.position.set(0, 0.4, 0.5);
+            belly.position.set(0, 0.5, 0.6);
             group.add(belly);
 
             const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e });
             const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
             for (let s = -1; s <= 1; s += 2) {
-                const white = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), eyeWhiteMat);
-                white.position.set(s * 0.2, 0.65, 0.55);
+                const white = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), eyeWhiteMat);
+                white.position.set(s * 0.25, 0.8, 0.65);
                 group.add(white);
-                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), eyeMat);
-                pupil.position.set(s * 0.2 + s * 0.05, 0.65, 0.65);
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), eyeMat);
+                pupil.position.set(s * 0.25 + s * 0.06, 0.8, 0.75);
                 group.add(pupil);
             }
 
             const hatMat = new THREE.MeshStandardMaterial({ color: 0x8B5CF6, roughness: 0.3 });
-            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.4, 6), hatMat);
-            hat.position.y = 0.9;
+            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.5, 6), hatMat);
+            hat.position.y = 1.05;
             group.add(hat);
-            const hatBand = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.04, 4, 8),
+            const hatBand = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.04, 4, 8),
                 new THREE.MeshStandardMaterial({ color: 0xEC4899 }));
-            hatBand.position.y = 0.75;
+            hatBand.position.y = 0.9;
             group.add(hatBand);
 
-            group.position.set(0, 0, 0);
+            group.position.set(0, 0, -12);
             return group;
         }
 
         const player = createPlayer();
         scene.add(player);
+        const PLAYER_RADIUS = 0.5;
 
         // ============================================================
-        // 玩家控制
+        // 进入古堡
         // ============================================================
-        const playerSpeed = 4.5;
-        const jumpSpeed = 5.0;
-        let velocityY = 0;
-        let isOnGround = true;
-        let isJumping = false;
+        function enterCastle() {
+            if (gameState.isInCastle) return;
+            gameState.isInCar = false;
+            gameState.isInCastle = true;
+            document.getElementById('locationLabel').textContent = '🏰 温斯洛古堡';
+            document.getElementById('game-status').textContent = '🔍 探索古堡，寻找宝箱！';
+            document.getElementById('enter-btn').classList.add('hidden');
+            player.position.set(0, 0, 4);
+            document.getElementById('controls-hint').textContent = '🕹️ 探索古堡 · 靠近宝箱跳跃开启';
+        }
 
+        // ============================================================
+        // 宝箱交互
+        // ============================================================
+        function checkNearTreasure() {
+            const playerPos = player.position;
+            let found = false;
+            for (let t of gameState.treasures) {
+                if (t.opened) continue;
+                const dx = playerPos.x - t.position.x;
+                const dz = playerPos.z - t.position.z;
+                if (dx * dx + dz * dz < 4) {
+                    openTreasure(t);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && gameState.isInCastle) {
+                // 在古堡里按跳跃，但不在宝箱旁，提示
+                document.getElementById('game-status').textContent = '🔍 附近没有宝箱，继续探索！';
+                setTimeout(() => {
+                    document.getElementById('game-status').textContent = '🔍 探索古堡，寻找宝箱！';
+                }, 1000);
+            }
+        }
+
+        function openTreasure(treasure) {
+            if (treasure.opened) return;
+            treasure.opened = true;
+            gameState.treasureCount++;
+            updateTreasureCount();
+
+            scene.remove(treasure.mesh);
+
+            const pos = treasure.position;
+            let model;
+            if (treasure.type === TREASURE_TYPES.WOOD) {
+                model = createPhoenixEgg(pos.x, 0.5, pos.z);
+                gameState.value += 25;
+                document.getElementById('game-status').textContent = '🔥 获得凤凰蛋！价值 25 万！';
+            } else {
+                model = createCrownHeart(pos.x, 0.5, pos.z);
+                gameState.value += 50;
+                document.getElementById('game-status').textContent = '👑 获得王权之心！价值 50 万！';
+            }
+            scene.add(model);
+
+            updateValueDisplay();
+
+            if (gameState.treasureCount >= gameState.maxTreasures) {
+                document.getElementById('game-status').textContent = '🎉 所有宝箱已开启！点击"上交全部"撤离！';
+                document.getElementById('submit-btn').disabled = false;
+            }
+
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
+        // ============================================================
+        // 上交全部
+        // ============================================================
+        function submitAll() {
+            if (gameState.value >= 100) {
+                gameState.isWin = true;
+                document.getElementById('winValue').textContent = gameState.value;
+                document.getElementById('win-overlay').classList.add('active');
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('game-status').textContent = '🚐 成功撤离！';
+            } else {
+                document.getElementById('game-status').textContent = '💰 当前价值 ' + gameState.value + ' 万，需要 100 万才能撤离！';
+                document.getElementById('game-status').style.color = '#ff6b6b';
+                setTimeout(() => {
+                    document.getElementById('game-status').style.color = '';
+                }, 1500);
+            }
+        }
+
+        // ============================================================
+        // UI更新
+        // ============================================================
+        function updateValueDisplay() {
+            document.getElementById('valueDisplay').innerHTML = gameState.value + ' <span>万</span>';
+        }
+
+        function updateTreasureCount() {
+            document.getElementById('treasureCount').textContent = '宝箱: ' + gameState.treasureCount + '/' + gameState
+                .maxTreasures;
+        }
+
+        // ============================================================
+        // 窗口自适应
+        // ============================================================
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ============================================================
+        // 相机跟随
+        // ============================================================
+        const camDistance = 10;
+        const camHeight = 7;
+
+        function updateCamera() {
+            const playerPos = player.position.clone();
+            playerPos.y += 1.5;
+            const angle = player.rotation.y || 0;
+            const offsetX = Math.sin(angle) * camDistance;
+            const offsetZ = Math.cos(angle) * camDistance;
+            camera.position.x = playerPos.x - offsetX;
+            camera.position.z = playerPos.z - offsetZ;
+            camera.position.y = playerPos.y + camHeight;
+            camera.lookAt(playerPos);
+        }
+
+        // ============================================================
+        // 初始化游戏
+        // ============================================================
+        function initGame() {
+            player.position.set(0, 0, -12);
+            document.getElementById('locationLabel').textContent = '🚐 摸金车';
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('enter-btn').classList.remove('hidden');
+            gameState.isInCar = true;
+            gameState.isInCastle = false;
+
+            placeTreasures();
+
+            updateValueDisplay();
+            updateTreasureCount();
+
+            document.getElementById('game-status').textContent = '🔍 点击「进入古堡」开始探险！';
+        }
+
+        // ============================================================
+        // 摇杆控制
+        // ============================================================
         const joystickArea = document.getElementById('joystick-area');
         const joystickKnob = document.getElementById('joystick-knob');
         let joystickActive = false;
@@ -1009,7 +1226,14 @@
         }, { passive: false });
         window.addEventListener('touchcancel', () => { if (joystickTouchId !== null) handleJoystickEnd(); });
 
+        // ============================================================
+        // 跳跃
+        // ============================================================
         const jumpBtn = document.getElementById('jump-btn');
+        let velocityY = 0;
+        let isOnGround = true;
+        let isJumping = false;
+        const jumpSpeed = 5.0;
 
         function doJump() {
             if (isOnGround && !isJumping) {
@@ -1025,156 +1249,11 @@
             doJump(); }, { passive: false });
 
         // ============================================================
-        // 宝箱交互
-        // ============================================================
-        function checkNearTreasure() {
-            const playerPos = player.position;
-            let found = false;
-            for (let t of gameState.treasures) {
-                if (t.opened) continue;
-                const dx = playerPos.x - t.position.x;
-                const dz = playerPos.z - t.position.z;
-                if (dx * dx + dz * dz < 4) {
-                    openTreasure(t);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                toggleLocation();
-            }
-        }
-
-        function openTreasure(treasure) {
-            if (treasure.opened) return;
-            treasure.opened = true;
-            gameState.treasureCount++;
-            updateTreasureCount();
-
-            scene.remove(treasure.mesh);
-
-            const pos = treasure.position;
-            let model;
-            if (treasure.type === TREASURE_TYPES.WOOD) {
-                model = createPhoenixEgg(pos.x, 0.5, pos.z);
-                gameState.value += 25;
-                document.getElementById('game-status').textContent = '🔥 获得凤凰蛋！价值 25 万！';
-            } else {
-                model = createCrownHeart(pos.x, 0.5, pos.z);
-                gameState.value += 50;
-                document.getElementById('game-status').textContent = '👑 获得王权之心！价值 50 万！';
-            }
-            scene.add(model);
-
-            updateValueDisplay();
-
-            if (gameState.treasureCount >= gameState.maxTreasures) {
-                document.getElementById('game-status').textContent = '🎉 所有宝箱已开启！点击"上交全部"撤离！';
-                document.getElementById('submit-btn').disabled = false;
-            }
-
-            if (navigator.vibrate) navigator.vibrate(50);
-        }
-
-        function toggleLocation() {
-            if (gameState.isInCar) {
-                gameState.isInCar = false;
-                gameState.isInCastle = true;
-                document.getElementById('locationLabel').textContent = '🏰 温斯洛古堡';
-                document.getElementById('game-status').textContent = '🔍 探索古堡，寻找宝箱！';
-                player.position.set(0, 0, 4);
-                document.getElementById('controls-hint').textContent = '🕹️ 探索古堡 · 靠近宝箱跳跃开启';
-            } else if (gameState.isInCastle) {
-                gameState.isInCastle = false;
-                gameState.isInCar = true;
-                document.getElementById('locationLabel').textContent = '🚐 摸金车';
-                document.getElementById('game-status').textContent = '🔙 已返回摸金车';
-                player.position.set(0, 0, -8);
-            }
-        }
-
-        // ============================================================
-        // 上交全部
-        // ============================================================
-        function submitAll() {
-            if (gameState.value >= 100) {
-                gameState.isWin = true;
-                document.getElementById('winValue').textContent = gameState.value;
-                document.getElementById('win-overlay').classList.add('active');
-                document.getElementById('submit-btn').disabled = true;
-                document.getElementById('game-status').textContent = '🚐 成功撤离！';
-            } else {
-                document.getElementById('game-status').textContent = '💰 当前价值 ' + gameState.value + ' 万，需要 100 万才能撤离！';
-                document.getElementById('game-status').style.color = '#ff6b6b';
-                setTimeout(() => {
-                    document.getElementById('game-status').style.color = '';
-                }, 1500);
-            }
-        }
-
-        // ============================================================
-        // UI更新
-        // ============================================================
-        function updateValueDisplay() {
-            document.getElementById('valueDisplay').innerHTML = gameState.value + ' <span>万</span>';
-        }
-
-        function updateTreasureCount() {
-            document.getElementById('treasureCount').textContent = '宝箱: ' + gameState.treasureCount + '/' + gameState
-                .maxTreasures;
-        }
-
-        // ============================================================
-        // 窗口自适应
-        // ============================================================
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // ============================================================
-        // 相机跟随
-        // ============================================================
-        const camDistance = 8;
-        const camHeight = 5;
-
-        function updateCamera() {
-            const playerPos = player.position.clone();
-            playerPos.y += 1.2;
-            const angle = player.rotation.y || 0;
-            const offsetX = Math.sin(angle) * camDistance;
-            const offsetZ = Math.cos(angle) * camDistance;
-            camera.position.x = playerPos.x - offsetX;
-            camera.position.z = playerPos.z - offsetZ;
-            camera.position.y = playerPos.y + camHeight;
-            camera.lookAt(playerPos);
-        }
-
-        // ============================================================
-        // 初始化游戏
-        // ============================================================
-        function initGame() {
-            player.position.set(0, 0, -8);
-            document.getElementById('locationLabel').textContent = '🚐 摸金车';
-            document.getElementById('submit-btn').disabled = true;
-            gameState.isInCar = true;
-
-            placeTreasures();
-
-            updateValueDisplay();
-            updateTreasureCount();
-
-            setTimeout(() => {
-                document.getElementById('game-status').textContent = '🚶 向前走进入古堡...';
-            }, 1500);
-        }
-
-        // ============================================================
         // 动画循环
         // ============================================================
         let time = 0;
         const clock = new THREE.Clock();
+        const playerSpeed = 4.5;
 
         function animate() {
             requestAnimationFrame(animate);
@@ -1212,24 +1291,15 @@
             const step = moveSpeed * delta;
             const moveVec = moveDir.clone().multiplyScalar(step);
 
-            const newPos = player.position.clone().add(moveVec);
-            if (Math.abs(newPos.x) < 15 && Math.abs(newPos.z) < 15) {
-                player.position.x += moveVec.x;
-                player.position.z += moveVec.z;
-            }
+            // 碰撞检测移动
+            const newX = player.position.x + moveVec.x;
+            const newZ = player.position.z + moveVec.z;
 
-            // 自动进出古堡
-            if (player.position.z > 3 && player.position.z < 5 && !gameState.isInCastle && !gameState.isInCar) {
-                gameState.isInCastle = true;
-                gameState.isInCar = false;
-                document.getElementById('locationLabel').textContent = '🏰 温斯洛古堡';
-                document.getElementById('game-status').textContent = '🔍 探索古堡，寻找宝箱！';
+            if (!checkCollision(newX, player.position.z, PLAYER_RADIUS)) {
+                player.position.x += moveVec.x;
             }
-            if (player.position.z < -5 && !gameState.isInCar && !gameState.isInCastle) {
-                gameState.isInCar = true;
-                gameState.isInCastle = false;
-                document.getElementById('locationLabel').textContent = '🚐 摸金车';
-                document.getElementById('game-status').textContent = '🔙 已返回摸金车';
+            if (!checkCollision(player.position.x, newZ, PLAYER_RADIUS)) {
+                player.position.z += moveVec.z;
             }
 
             // 跳跃物理
@@ -1247,11 +1317,17 @@
             const breathe = Math.sin(time * 2) * 0.005;
             player.position.y += breathe;
 
-            // 宝箱旋转
+            // 宝箱旋转 + 发光闪烁
             gameState.treasures.forEach(t => {
                 if (!t.opened && t.mesh) {
                     t.mesh.rotation.y += delta * 0.8;
                     t.mesh.position.y = 0 + Math.sin(time * 2 + t.position.x) * 0.05;
+                    // 发光闪烁
+                    t.mesh.children.forEach(child => {
+                        if (child.material && child.material.emissiveIntensity !== undefined) {
+                            child.material.emissiveIntensity = 0.15 + Math.sin(time * 3 + t.position.x) * 0.1;
+                        }
+                    });
                 }
             });
 
@@ -1261,7 +1337,7 @@
             candleLight3.intensity = 1.3 + Math.sin(time * 2.8 + 2) * 0.25;
             candleLight4.intensity = 1.3 + Math.sin(time * 3.2 + 0.5) * 0.25;
 
-            // 凤凰蛋/王权之心特效
+            // 宝物特效
             scene.children.forEach(child => {
                 if (child.isMesh && child.material && child.material.emissiveIntensity !== undefined) {
                     if (child.material.color.getHex() === 0xff6633 || child.material.color.getHex() === 0xff0044) {
@@ -1271,7 +1347,6 @@
             });
 
             updateCamera();
-
             renderer.render(scene, camera);
         }
 
@@ -1280,7 +1355,8 @@
 
         console.log('🕯️ 惊魂寻宝队已加载！');
         console.log('📦 找到2个宝箱，集齐100万撤离！');
-        console.log('🚐 出生在摸金车，走向古堡探索！');
+        console.log('🚐 点击「进入古堡」开始探险！');
+        console.log('🛡️ 碰撞箱已启用，不会穿模！');
     </script>
 </body>
 </html>
